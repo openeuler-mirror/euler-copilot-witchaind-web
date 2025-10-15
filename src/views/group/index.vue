@@ -5,12 +5,23 @@
         <div class="group-box">
             <el-tabs type="card" class="group-tabs" default-active="mycreated" v-model="activeName"
                 @tab-change="handleTabChange">
-                <el-tab-pane class="group-tabs-item" v-for="tab in groupTabs" :name="tab.name" :key="tab.name"
-                    :label="tab.label">
+                <el-tab-pane 
+                    class="group-tabs-item" 
+                    v-for="tab in groupTabs" 
+                    :name="tab.name" 
+                    :key="tab.name"
+                    :label="tab.label"
+                >
                     <div class="group-tab-header">
                         <div>
-                            <el-button v-if="tab.name === 'mycreated'" type="primary" class="group-btn"
-                                @click="handleCreateGroup(true)">{{ $t('group.createTeam') }}</el-button>
+                            <el-button 
+                                v-if="tab.name === 'mycreated'" 
+                                type="primary" 
+                                class="group-btn"
+                                @click="handleCreateGroup(true)"
+                            >
+                                {{ $t('group.createTeam') }}
+                            </el-button>
                         </div>
                         <div class="group-right-btn">
                             <div class="group-btn-search">
@@ -67,8 +78,26 @@
                                             {{ item.memberCount }}{{ $t('group.people') }}
                                         </span>
                                     </div>
+                                    <!-- 我创建的团队显示编辑按钮 -->
                                     <el-button v-if="tab.name === 'mycreated'" text @click.stop="handleEditKl(item)">
                                         {{ $t('btnText.edit') }}
+                                    </el-button>
+                                    <!-- 全部团队tab中，已加入的显示编辑按钮，未加入的显示申请加入按钮 -->
+                                    <el-button 
+                                        v-else-if="tab.name === 'all' && item.isJoined" 
+                                        text 
+                                        @click.stop="handleEditKl(item)"
+                                    >
+                                        {{ $t('btnText.edit') }}
+                                    </el-button>
+                                    <el-button 
+                                        v-else-if="tab.name === 'all' && !item.isJoined" 
+                                        text
+                                        size="small"
+                                        :loading="item.applying"
+                                        @click.stop="handleApplyToJoin(item)"
+                                    >
+                                        {{ $t('group.applyToJoin') }}
                                     </el-button>
                                 </div>
                             </div>
@@ -112,10 +141,28 @@
                                         {{ convertUTCToLocalTime(scope.row.createdTime)}}
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="action" :label="$t('btnText.operation')" width="100">
+                                <el-table-column prop="action" :label="$t('btnText.operation')" width="120">
                                     <template #default="scope">
-                                        <el-button text @click="handleEditKl(scope.row)">
+                                        <!-- 我创建的团队显示编辑按钮 -->
+                                        <el-button v-if="activeName === 'mycreated'" text @click="handleEditKl(scope.row)">
                                             {{ $t('btnText.edit') }}
+                                        </el-button>
+                                        <!-- 全部团队tab中，已加入的显示编辑按钮，未加入的显示申请加入按钮 -->
+                                        <el-button 
+                                            v-else-if="activeName === 'all' && scope.row.isJoined" 
+                                            text 
+                                            @click="handleEditKl(scope.row)"
+                                        >
+                                            {{ $t('btnText.edit') }}
+                                        </el-button>
+                                        <el-button 
+                                            v-else-if="activeName === 'all' && !scope.row.isJoined" 
+                                            type="primary" 
+                                            size="small"
+                                            :loading="scope.row.applying"
+                                            @click="handleApplyToJoin(scope.row)"
+                                        >
+                                            {{ $t('group.applyToJoin') }}
                                         </el-button>
                                     </template>
                                 </el-table-column>
@@ -126,13 +173,19 @@
                         v-if="groupList?.length > 0" :current-page="currentPage" :page-size="currentPageSize"
                         :page-sizes="pagination.pageSizes" :layout="pagination.layout" :total="totalCount"
                         popper-class="fileLibraryPage" @size-change="handleSizeChange"
-                        @current-change="handleCurrentChange" />
+                        @current-change="handleCurrentChange" 
+                    />
                 </el-tab-pane>
             </el-tabs>
         </div>
     </div>
-    <CreateGroup :createGroupVisible="createGroupVisible" :handlequeryTeamList="handlequeryTeamList"
-        :dialogueType="dialogueType" :currentRow="currentRow" :close="() => handleCreateGroup(false)" />
+    <CreateGroup 
+        :createGroupVisible="createGroupVisible" 
+        :handlequeryTeamList="handlequeryTeamList"
+        :dialogueType="dialogueType" 
+        :currentRow="currentRow" 
+        :close="() => handleCreateGroup(false)" 
+    />
 </template>
 <script lang="ts" setup>
 import UserHeaderBar from '@/components/UserHeaderBar/index.vue';
@@ -161,7 +214,7 @@ const { t, locale} = useI18n();
 const groupStore = useGroupStore();
 const { setCurTeamInfo } = groupStore;
 
-const activeName = ref('mycreated');
+const activeName = ref('allTeams');
 const currentRow = ref({});
 const dialogueType = ref('create');
 let groupList = ref<any>([]);
@@ -214,6 +267,10 @@ const { navGroup } = storeToRefs(useGroupStore());
 
 const groupTabs = ref([
     {
+        label: t('group.allTeams'),
+        name: 'all',
+    },
+    {
         label: t('group.myCreate'),
         name: 'mycreated',
     },
@@ -224,6 +281,10 @@ const groupTabs = ref([
 ])
 watch(()=>t('') , () => {
     groupTabs.value = [
+        {
+            label: t('group.allTeams'),
+            name: 'all',
+        },
         {
             label: t('group.myCreate'),
             name: 'mycreated',
@@ -280,15 +341,91 @@ const handleToGroup = async (row: any) => {
     setCurTeamInfo(row);
 }
 
-const handlequeryTeamList = (param: { teamType: string, page: number, pageSize: number, teamName?: string }) => {
+const handlequeryTeamList = async (param: { teamType: string, page: number, pageSize: number, teamName?: string }) => {
     loading.value = true;
-    GroupAPI.teamList(param).then((res: any) => {
-        groupList.value = res.teams;
-        totalCount.value = res.total;
-    }).finally(() => {
+    try {
+        if (param.teamType === 'all') {
+            // 获取全部团队：公开团队 + 我加入的团队 + 我创建的团队
+            const [publicRes, joinedRes, createdRes] = await Promise.all([
+                GroupAPI.teamList({ teamType: 'public', page: 1, pageSize: 1000, teamName: param.teamName }),
+                GroupAPI.teamList({ teamType: 'myjoined', page: 1, pageSize: 1000, teamName: param.teamName }),
+                GroupAPI.teamList({ teamType: 'mycreated', page: 1, pageSize: 1000, teamName: param.teamName })
+            ]);
+            
+            const publicTeams = (publicRes as any)?.teams || [];
+            const joinedTeams = (joinedRes as any)?.teams || [];
+            const createdTeams = (createdRes as any)?.teams || [];
+            
+            // 合并已加入和创建的团队，标记为已加入
+            const myTeams = [...joinedTeams, ...createdTeams];
+            const myTeamIds = new Set(myTeams.map((team: any) => team.teamId));
+            
+            // 处理公开团队，标记是否已加入
+            const processedPublicTeams = publicTeams.map((team: any) => ({
+                ...team,
+                isJoined: myTeamIds.has(team.teamId),
+                applying: false
+            }));
+            
+            // 处理我的团队，标记为已加入
+            const processedMyTeams = myTeams.map((team: any) => ({
+                ...team,
+                isJoined: true,
+                applying: false
+            }));
+            
+            // 合并所有团队，去重
+            const allTeamsMap = new Map();
+            [...processedPublicTeams, ...processedMyTeams].forEach((team: any) => {
+                if (!allTeamsMap.has(team.teamId)) {
+                    allTeamsMap.set(team.teamId, team);
+                } else {
+                    // 如果团队已存在，优先保留已加入的状态
+                    const existingTeam = allTeamsMap.get(team.teamId);
+                    if (team.isJoined) {
+                        allTeamsMap.set(team.teamId, { ...existingTeam, isJoined: true });
+                    }
+                }
+            });
+            
+            const allTeams = Array.from(allTeamsMap.values()).sort((a: any, b: any) => 
+                new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+            );
+            
+            // 手动分页
+            const start = (param.page - 1) * param.pageSize;
+            const end = start + param.pageSize;
+            groupList.value = allTeams.slice(start, end);
+            totalCount.value = allTeams.length;
+        } else {
+            // 原有逻辑
+            const res = await GroupAPI.teamList(param) as any;
+            groupList.value = res.teams;
+            totalCount.value = res.total;
+        }
+    } catch (error) {
+        console.error('获取团队列表失败:', error);
+        groupList.value = [];
+        totalCount.value = 0;
+    } finally {
         loading.value = false;
-    })
+    }
 }
+
+// 申请加入团队
+const handleApplyToJoin = async (team: any) => {
+    try {
+        team.applying = true;
+        await GroupAPI.applyToJoinTeam(team.teamId);
+        ElMessage.success(`已成功申请加入团队"${team.teamName}"`);
+        // 可以选择刷新团队列表或更新团队状态
+    } catch (error) {
+        console.error('申请加入团队失败:', error);
+        ElMessage.error('申请加入团队失败，请重试');
+    } finally {
+        team.applying = false;
+    }
+};
 
 onMounted(() => {
     let param = {

@@ -220,6 +220,15 @@ class GroupAPI {
       data,
     });
   }
+
+  /** 申请加入团队接口*/
+  static applyToJoinTeam(teamId: string) {
+    return request({
+      url: `/team/application`,
+      method: 'post',
+      params: { teamId },
+    });
+  }
 }
 
 export default GroupAPI;

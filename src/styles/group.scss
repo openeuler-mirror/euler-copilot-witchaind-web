@@ -178,6 +178,15 @@
                           }
                           button{
                             height: 16px;
+                            
+                            // 申请加入按钮样式
+                            &.el-button--primary.el-button--small {
+                              height: 24px;
+                              padding: 4px 12px;
+                              font-size: 12px;
+                              border-radius: 4px;
+                              min-width: 72px;
+                            }
                           }
                       }
                   }
@@ -280,6 +289,15 @@
 
                   .el-pagination .el-input__inner {
                     height: var(--el-input-inner-height) !important;
+                  }
+
+                  // 表格中申请加入按钮样式
+                  .el-button--primary.el-button--small {
+                    height: 24px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    border-radius: 4px;
+                    min-width: 72px;
                   }
                 }
               }

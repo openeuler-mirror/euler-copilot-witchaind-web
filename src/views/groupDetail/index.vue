@@ -1516,6 +1516,7 @@ const loadMoreTeamMessages = async () => {
     await getTeamMessages(nextPage, teamMessagesPageSize.value, true);
 };
 
+
 watch(()=>groupMenu.value , (newVal) => {
     if(newVal=== 'detail'){
         queryGroupDetail();
@@ -1743,6 +1744,7 @@ onMounted(()=>{
         padding: 40px 0;
         text-align: center;
     }
+
 
     // 团队动态样式
     .team-news-container {
