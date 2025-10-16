@@ -146,7 +146,7 @@ class GroupAPI {
   /** 删除团队成员接口*/
   static deleteTeamMember(data: {
     teamId: string;
-    userSub: string;
+    userSubs: string[];
   }) {
     return request({
       url: `/team/usr`,
@@ -155,13 +155,14 @@ class GroupAPI {
     });
   }
 
-  /** 批量删除团队成员接口*/
-  static batchDeleteTeamMembers(data: {
+
+  /** 退出团队接口（用户主动退出）- 使用 /team/usr 的 DELETE 请求，传递 userSubs 数组 */
+  static quitTeam(data: {
     teamId: string;
     userSubs: string[];
   }) {
     return request({
-      url: `/team/usr/batch`,
+      url: `/team/usr`,
       method: 'delete',
       data,
     });
@@ -173,37 +174,41 @@ class GroupAPI {
     targetUserSub: string;
     roleId: string;
   }) {
+    const { teamId, targetUserSub, roleId } = data;
     return request({
-      url: `/team/usr/role`,
+      url: `/team/usr`,
       method: 'put',
-      data,
+      params: { teamId, targetUserSub, roleId },
     });
   }
 
   /** 邀请团队成员接口*/
   static inviteMembers(data: {
     teamId: string;
-    members: Array<{
-      userSub: string;
-      roleName: string;
+    inviteUsers: Array<{
+      roleId: string;
+      userSubInvite: string;
     }>;
   }) {
+    const { teamId, inviteUsers } = data;
     return request({
-      url: `/team/usr/invite`,
+      url: `/team/invitation`,
       method: 'post',
-      data,
+      params: { teamId },
+      data: { inviteUsers },
     });
   }
 
   /** 移交团队所有权接口*/
   static transferTeamOwnership(data: {
     teamId: string;
-    newOwnerUserSub: string;
+    targetUserSub: string;
   }) {
+    const { teamId, targetUserSub } = data;
     return request({
-      url: `/team/transfer`,
-      method: 'post',
-      data,
+      url: `/team/author`,
+      method: 'put',
+      params: { targetUserSub, teamId },
     });
   }
 

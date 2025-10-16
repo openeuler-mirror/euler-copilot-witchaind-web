@@ -55,8 +55,8 @@ export default {
     },
   },
   group: {
-    myCreate: 'my created',
-    myJoin: 'my joined',
+    myCreate: 'My Created',
+    myJoin: 'My Joined',
     createTeam: 'Create Team',
     editTeam: 'Edit Team',
     pleaseInput: 'Please enter a team name.',
@@ -80,6 +80,10 @@ export default {
     create: 'Create',
     allTeams: 'All',
     applyToJoin: 'Apply',
+    quit: 'Quit',
+    confirmQuit: 'Are you sure you want to quit team "{teamName}"?',
+    quitSuccess: 'Successfully quit team "{teamName}"',
+    quitFailed: 'Failed to quit team. Please try again.',
   },
   groupDetail: {
     memberPermission: 'Member Management',

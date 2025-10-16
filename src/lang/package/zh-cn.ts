@@ -86,6 +86,10 @@ export default {
     create: '创建',
     allTeams: '全部',
     applyToJoin: '申请加入',
+    quit: '退出',
+    confirmQuit: '确定要退出团队"{teamName}"吗？',
+    quitSuccess: '已成功退出团队"{teamName}"',
+    quitFailed: '退出团队失败，请重试',
   },
   groupDetail: {
     memberPermission: '成员管理',

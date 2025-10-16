@@ -14,7 +14,6 @@ export interface CreateKbRequest {
   // 检索设置
   enableReranker: boolean;
   rerankerModel: string;
-  topK: number;
   enableCompression: boolean;
   enableDocumentCategory: boolean;
   enableContextAssociation: boolean;
@@ -39,7 +38,6 @@ export interface UpdateKbRequest {
   // 检索设置
   enableReranker: boolean;
   rerankerModel: string;
-  topK: number;
   enableCompression: boolean;
   enableDocumentCategory: boolean;
   enableContextAssociation: boolean;

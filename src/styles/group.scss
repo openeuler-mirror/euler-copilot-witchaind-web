@@ -115,6 +115,15 @@
                         padding: 16px;
                         cursor: pointer;
 
+                        &.card-disabled {
+                          opacity: 0.6;
+                          cursor: not-allowed;
+                          
+                          &:hover {
+                            background-color: var(--o-bg-color-light);
+                          }
+                        }
+
                         .group-card-title {
                           display: flex;
                           justify-content: space-between;
@@ -230,6 +239,12 @@
                     font-size: 12px;
                     font-weight: 500;
                     cursor: pointer;
+
+                    &.name-disabled {
+                      opacity: 0.6;
+                      cursor: not-allowed;
+                      color: var(--o-text-color-disabled);
+                    }
                   }
               
                   .group-id {
