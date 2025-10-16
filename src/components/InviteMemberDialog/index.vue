@@ -72,7 +72,9 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { ElMessage } from 'element-plus';
 import GroupAPI from '@/api/group';
 import MemberCard from './MemberCard.vue';
 
@@ -135,22 +137,14 @@ const getUserSearchResults = async () => {
             pageSize: 100
         });
         
-        if (response && response.data && response.data.result && response.data.result.users) {
-            userSearchResults.value = response.data.result.users.map((user: any) => ({
+        if (response && (response as any).users) {
+            userSearchResults.value = (response as any).users.map((user: any) => ({
                 userId: user.userSub || user.user_sub,
-                userName: user.userName || user.user_name || user.userSub || user.user_sub
+                userName: user.userName || user.user_name
             }));
         }
     } catch (error) {
-        console.error('获取用户搜索结果失败:', error);
-        // 使用fallback数据
-        userSearchResults.value = [
-            { userId: "70603573", userName: "常军" },
-            { userId: "70800319", userName: "熊弘" },
-            { userId: "70082181", userName: "高致" },
-            { userId: "70671540", userName: "韩博" },
-            { userId: "70283144", userName: "彭韶" }
-        ];
+        ElMessage.error(`获取用户列表失败`);
     } finally {
         userSearchLoading.value = false;
     }
@@ -185,10 +179,12 @@ const handleAddUsers = () => {
     selectedUserIds.value.forEach(userId => {
         const user = userSearchResults.value.find(u => u.userId === userId);
         if (user && !pendingMembers.value.some(m => m.userId === userId)) {
+            // 使用第一个角色选项的 value（roleId）作为默认角色
+            const defaultRoleId = props.roleOptions.length > 0 ? props.roleOptions[0].value : '';
             pendingMembers.value.push({
                 userId: user.userId,
                 userName: user.userName,
-                selectedRole: t('groupDetail.defaultRole') // 默认角色
+                selectedRole: defaultRoleId
             });
         }
     });

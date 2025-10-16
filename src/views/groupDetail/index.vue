@@ -51,6 +51,7 @@
                                 </template>
                                 <template #default="{ row }">
                                     <el-checkbox 
+                                        v-if="row.roleName !== 'owner'"
                                         :model-value="isMemberRowSelected(row)"
                                         @change="(val: any) => handleMemberRowSelection(row, !!val)"
                                     />
@@ -83,7 +84,7 @@
                                     <!-- 编辑状态显示选择框 -->
                                     <el-select 
                                         v-if="editingMemberId === row.userId"
-                                        v-model="row.roleName" 
+                                        v-model="row.roleId" 
                                         :placeholder="$t('groupDetail.pleaseSelectRole')"
                                         size="small"
                                         style="width: 120px;"
@@ -387,7 +388,7 @@
                             fit-input-width
                         >
                             <el-option
-                                v-for="user in userOptions"
+                                v-for="user in filteredUserOptions"
                                 :key="user.value"
                                 :label="user.label"
                                 :value="user.value"
@@ -494,6 +495,19 @@ const transferDialogVisible = ref(false);
 const selectedReceiver = ref('');
 // 用户选项数据，从接口获取
 const userOptions = ref<{ value: string; label: string }[]>([])
+
+// 过滤后的用户选项（排除owner和无效数据）
+const filteredUserOptions = computed(() => {
+    return userOptions.value.filter(user => {
+        // 过滤掉value为空或无效的用户
+        if (!user.value || user.value.trim() === '') {
+            return false;
+        }
+        // 过滤掉owner角色的用户（不能转移给自己）
+        const member = memberTableData.value.find(m => m.userId === user.value);
+        return member && member.roleName !== 'owner';
+    });
+})
 
 // 角色对话框相关
 const roleDialogVisible = ref(false);
@@ -769,18 +783,22 @@ const isSomeRolesSelected = computed(() => {
 
 // 成员选择相关计算属性
 const isAllMembersSelected = computed(() => {
-    return paginatedMemberTableData.value.length > 0 && 
-           paginatedMemberTableData.value.every(member => 
+    // 过滤掉owner角色的成员
+    const selectableMembers = paginatedMemberTableData.value.filter(member => member.roleName !== 'owner');
+    return selectableMembers.length > 0 && 
+           selectableMembers.every(member => 
                selectedMembers.value.some(selected => selected.userId === member.userId)
            );
 });
 
 const isSomeMembersSelected = computed(() => {
-    const currentPageSelected = paginatedMemberTableData.value.filter(member => 
+    // 过滤掉owner角色的成员
+    const selectableMembers = paginatedMemberTableData.value.filter(member => member.roleName !== 'owner');
+    const currentPageSelected = selectableMembers.filter(member => 
         selectedMembers.value.some(selected => selected.userId === member.userId)
     );
     return currentPageSelected.length > 0 && 
-           currentPageSelected.length < paginatedMemberTableData.value.length;
+           currentPageSelected.length < selectableMembers.length;
 });
 
 const handleRowSelection = (row: TableRow, selected: boolean) => {
@@ -938,9 +956,9 @@ const handleInviteMemberConfirm = async (members: any[]) => {
         // 调用邀请成员接口
         await GroupAPI.inviteMembers({
             teamId,
-            members: members.map(member => ({
-                userSub: member.userId,
-                roleName: member.selectedRole
+            inviteUsers: members.map(member => ({
+                roleId: member.selectedRole,
+                userSubInvite: member.userId
             }))
         });
         
@@ -974,8 +992,8 @@ const handleBatchDeleteMember = () => {
             const teamId = localStorage.getItem('teamId') ?? '';
             const userSubs = selectedMembers.value.map(member => member.userId);
             
-            // 调用批量删除接口
-            await GroupAPI.batchDeleteTeamMembers({
+            // 调用删除成员接口（支持批量）
+            await GroupAPI.deleteTeamMember({
                 teamId,
                 userSubs
             });
@@ -1024,6 +1042,11 @@ const isMemberRowSelected = (row: Member) => {
 };
 
 const handleMemberRowSelection = (row: Member, selected: boolean) => {
+    // 如果是owner角色，直接返回，不允许选中
+    if (row.roleName === 'owner') {
+        return;
+    }
+    
     if (selected) {
         if (!selectedMembers.value.some(m => m.userId === row.userId)) {
             selectedMembers.value.push(row);
@@ -1038,17 +1061,20 @@ const handleMemberRowSelection = (row: Member, selected: boolean) => {
 
 const handleSelectAllMembers = (selected: boolean) => {
     if (selected) {
-        // 将当前页的所有成员添加到选择列表中
-        paginatedMemberTableData.value.forEach(member => {
+        // 将当前页的所有非owner角色成员添加到选择列表中
+        const selectableMembers = paginatedMemberTableData.value.filter(member => member.roleName !== 'owner');
+        selectableMembers.forEach(member => {
             if (!selectedMembers.value.some(m => m.userId === member.userId)) {
                 selectedMembers.value.push(member);
             }
         });
     } else {
-        // 从选择列表中移除当前页的所有成员
-        const currentPageMemberIds = paginatedMemberTableData.value.map(m => m.userId);
+        // 从选择列表中移除当前页的所有非owner角色成员
+        const selectableMemberIds = paginatedMemberTableData.value
+            .filter(member => member.roleName !== 'owner')
+            .map(m => m.userId);
         selectedMembers.value = selectedMembers.value.filter(member => 
-            !currentPageMemberIds.includes(member.userId)
+            !selectableMemberIds.includes(member.userId)
         );
     }
 };
@@ -1077,12 +1103,16 @@ const handleSaveMember = (row: Member) => {
     if (!originalMemberData.value) return;
     
     // 检查角色是否有变化
-    if (row.roleName === originalMemberData.value.roleName) {
+    if (row.roleId === originalMemberData.value.roleId) {
         // 角色没有变化，直接退出编辑状态
         editingMemberId.value = null;
         originalMemberData.value = null;
         return;
     }
+    
+    // 根据roleId找到对应的角色名称
+    const newRole = roleOptions.value.find(option => option.value === row.roleId);
+    const newRoleName = newRole ? newRole.label : row.roleName;
     
     // 设置待确认的修改数据
     pendingMemberChange.value = {
@@ -1090,7 +1120,7 @@ const handleSaveMember = (row: Member) => {
         userName: row.userName,
         oldRoleName: originalMemberData.value.roleName,
         newRoleId: row.roleId,
-        newRoleName: row.roleName,
+        newRoleName: newRoleName,
     };
     
     // 显示确认对话框
@@ -1103,7 +1133,8 @@ const handleCancelEditMember = () => {
         // 恢复原始数据
         const memberIndex = memberTableData.value.findIndex(m => m.userId === editingMemberId.value);
         if (memberIndex > -1) {
-            // 恢复角色
+            // 恢复角色ID和角色名称
+            memberTableData.value[memberIndex].roleId = originalMemberData.value.roleId;
             memberTableData.value[memberIndex].roleName = originalMemberData.value.roleName;
         }
     }
@@ -1119,12 +1150,11 @@ const handleMemberRoleConfirmOk = async () => {
     
     try {
         const teamId = localStorage.getItem('teamId') ?? '';
-        
         // 调用更新成员角色接口
         await GroupAPI.updateMemberRole({
-            teamId,
+            teamId: teamId,
             targetUserSub: pendingMemberChange.value.userId,
-            roleId: pendingMemberChange.value.newRoleId
+            roleId: pendingMemberChange.value.newRoleId,
         });
         
         ElMessage.success(`成员 ${pendingMemberChange.value.userName} 的角色已成功修改为 ${pendingMemberChange.value.newRoleName}`);
@@ -1140,6 +1170,7 @@ const handleMemberRoleConfirmOk = async () => {
         if (originalMemberData.value) {
             const memberIndex = memberTableData.value.findIndex(m => m.userId === pendingMemberChange.value!.userId);
             if (memberIndex > -1) {
+                memberTableData.value[memberIndex].roleId = originalMemberData.value.roleId;
                 memberTableData.value[memberIndex].roleName = originalMemberData.value.roleName;
             }
         }
@@ -1159,6 +1190,7 @@ const handleMemberRoleConfirmCancel = () => {
         const memberIndex = memberTableData.value.findIndex(m => m.userId === editingMemberId.value);
         if (memberIndex > -1) {
             memberTableData.value[memberIndex].roleId = originalMemberData.value.roleId;
+            memberTableData.value[memberIndex].roleName = originalMemberData.value.roleName;
         }
     }
     
@@ -1197,7 +1229,7 @@ const handleDeleteMember = (row: Member) => {
             // 调用删除成员接口
             await GroupAPI.deleteTeamMember({
                 teamId,
-                userSub: row.userId
+                userSubs: [row.userId]
             });
             
             // 删除成功后从本地数据中移除
@@ -1298,9 +1330,10 @@ const getTeamUsers = async (page: number = 1, pageSize: number = 100) => {
             const teamUsers = data.teamUsers;
             
             // 更新用户选项数据（用于移交团队等功能）
-            userOptions.value = teamUsers.map((user: any) => ({
-                value: user.userSub || user.user_sub,
-                label: user.userName || user.user_name || user.userSub || user.user_sub
+            // 使用userId作为唯一标识，确保key唯一且与成员表格数据一致
+            userOptions.value = teamUsers.map((user: any, index: number) => ({
+                value: user.userId || user.userSub || user.user_sub,
+                label: user.userName || user.user_name || user.userId || user.userSub || user.user_sub
             }));
             
             // 更新成员表格数据
@@ -1341,7 +1374,7 @@ const getRoleList = async () => {
             
             // 更新角色选项
             roleOptions.value = roles.map((role: any) => ({
-                value: role.roleName || role.role_name || role.name,
+                value: role.roleId || role.role_id || role.id,
                 label: role.roleName || role.role_name || role.name
             }));
         }
@@ -1566,7 +1599,8 @@ const handleTransferTeam = () => {
 }
 
 const handleTransferConfirm = async () => {
-    if (!selectedReceiver.value) {
+    // 增强验证：检查是否为空字符串、undefined、null等
+    if (!selectedReceiver.value || selectedReceiver.value.trim() === '') {
         ElMessage.warning('请选择接收人');
         return;
     }
@@ -1577,7 +1611,7 @@ const handleTransferConfirm = async () => {
         // 调用移交团队所有权接口
         await GroupAPI.transferTeamOwnership({
             teamId,
-            newOwnerUserSub: selectedReceiver.value
+            targetUserSub: selectedReceiver.value
         });
         
         ElMessage.success('团队所有权移交成功');

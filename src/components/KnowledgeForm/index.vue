@@ -209,23 +209,6 @@
           </el-select>
         </el-form-item>
         
-        <el-form-item label="Top K" prop="topK">
-          <div class="slider-input-group">
-            <el-slider
-              v-model="ruleForm.topK"
-              :min="1"
-              :max="10"
-              :disabled="!ruleForm.enableReranker"
-              show-stops
-              class="top-k-slider" />
-            <el-input-number
-              v-model="ruleForm.topK"
-              :min="1"
-              :max="10"
-              :disabled="!ruleForm.enableReranker"
-              class="top-k-input" />
-          </div>
-        </el-form-item>
         
       </div>
 
@@ -292,7 +275,6 @@ interface RuleForm {
   // 检索设置
   enableReranker: boolean;
   rerankerModel: string;
-  topK: number;
   // 其他
   docTypes: any[];
   uploadSizeLimit: number;
@@ -329,7 +311,6 @@ const ruleForm = ref<RuleForm>({
   // 检索设置
   enableReranker: true, // 默认开启
   rerankerModel: '',
-  topK: 3, // 默认3
   // 其他
   docTypes: [],
   uploadSizeLimit: 512,
@@ -338,7 +319,7 @@ const ruleForm = ref<RuleForm>({
 const languageOptions = ref<Array<{label: string, value: string}>>([]);
 const emBeddingModelOptions = ref<Array<{label: string, value: string}>>([]);
 const parserMethodOptions = ref<Array<{label: string, value: string}>>([]);
-const rerankerOptions = ref<Array<{label: string, value: string}>>([]);
+const rerankerOptions = ref<Array<{label: string, value: string, method: string, name: string}>>([]);
 const languageApiData = ref<any[]>([]); // 存储API返回的原始数据
 
 // 生成分词器选项的函数
@@ -357,6 +338,29 @@ const generateLanguageOptions = () => {
       value: item,
     };
   }) || [];
+};
+
+// 更新reranker选项的函数
+const updateRerankerOptions = (rerankerRes: any) => {
+  // 处理不同的API响应格式
+  let rerankerData = [];
+  if (rerankerRes?.result) {
+    // 如果响应有result字段
+    rerankerData = rerankerRes.result;
+  } else if (Array.isArray(rerankerRes)) {
+    // 如果响应直接是数组
+    rerankerData = rerankerRes;
+  } else if (rerankerRes?.data) {
+    // 如果响应有data字段
+    rerankerData = rerankerRes.data;
+  }
+  
+  rerankerOptions.value = rerankerData?.map((item: any) => ({
+    label: `[${item.rerankMethod}] ${item.rerankerName}`,
+    value: item.rerankerName,
+    method: item.rerankMethod,
+    name: item.rerankerName
+  })) || [];
 };
 
 const props = defineProps({
@@ -404,7 +408,6 @@ onMounted(async () => {
           chunkIdentifier: props.formData?.chunkIdentifier || '\\n\\n',
           enableReranker: props.formData?.enableReranker || false,
           rerankerModel: props.formData?.rerankerModel || '',
-          topK: props.formData?.topK || 3,
         } as RuleForm)
       )
     : ruleForm.value;
@@ -416,24 +419,25 @@ onMounted(async () => {
     KbAppAPI.queryParseMethodList(),
     KbAppAPI.queryRerankerList(),
   ]);
-  // 存储API返回的原始数据
+  
+  // 处理语言选项
   languageApiData.value = languageRes as unknown as [];
-  // 生成分词器选项
   generateLanguageOptions();
+  
+  // 处理嵌入模型选项
   emBeddingModelOptions.value = (embeddingRes as unknown as [])?.map((item: any) => ({
     label: item,
     value: item,
   }));
 
+  // 处理解析方法选项
   parserMethodOptions.value = (parseMethodRes as unknown as [])?.map((item: any) => ({
     label: item,
     value: item,
   }));
   
-  rerankerOptions.value = (rerankerRes as unknown as [])?.map((item: any) => ({
-    label: item.name,
-    value: item.name,
-  }));
+  // 处理reranker选项 - 使用分组方式展示完整信息
+  updateRerankerOptions(rerankerRes);
   
   // 如果是创建状态，设置默认值
   if (props.isCreate) {
@@ -442,8 +446,8 @@ onMounted(async () => {
     
     ruleForm.value.embeddingModel = emBeddingModelOptions.value?.[0].value || '';
     ruleForm.value.defaultParseMethod = parserMethodOptions.value?.[0].value || '';
-    // 默认选择jaccad_dis_reranker
-    const defaultReranker = rerankerOptions.value?.find(item => item.value === 'jaccad_dis_reranker');
+    // 默认选择jaccard dis reranker
+    const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
     ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
   }
 });
@@ -453,7 +457,7 @@ const checkSectionCompletion = () => {
   const sectionFields = {
     basic: ['kbName'],
     parse: ['defaultParseMethod', 'chunkMethod', 'defaultChunkSize', 'uploadCountLimit', 'embeddingModel'],
-    retrieval: ['tokenizer', 'topK']
+    retrieval: ['tokenizer']
   };
   
   const completed: string[] = [];
@@ -520,11 +524,10 @@ const handleRerankerToggle = (value: string | number | boolean) => {
   if (!boolValue) {
     // 关闭Reranker时，清空相关设置
     ruleForm.value.rerankerModel = '';
-    ruleForm.value.topK = 3;
   } else {
     // 开启Reranker时，设置默认值
     if (!ruleForm.value.rerankerModel) {
-      const defaultReranker = rerankerOptions.value?.find(item => item.value === 'jaccad_dis_reranker');
+      const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
       ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
     }
   }
@@ -582,8 +585,6 @@ const rules = reactive<FormRules<RuleForm>>({
       trigger: ['blur', 'change'],
     },
   ],
-  // 检索设置
-  topK: [{ required: true }],
   uploadSizeLimit: [{ required: true }],
 });
 
@@ -631,7 +632,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       // 检索设置
       enableReranker: ruleForm.value.enableReranker,
       rerankerModel: ruleForm.value.rerankerModel,
-      topK: ruleForm.value.topK,
       enableCompression: false, // 固定为false，不再提供UI配置
       enableDocumentCategory: false, // 固定为false，不再提供UI配置
       enableContextAssociation: true, // 固定为true，不再提供UI配置

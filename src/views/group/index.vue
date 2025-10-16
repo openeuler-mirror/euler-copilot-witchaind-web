@@ -58,7 +58,11 @@
                                 <div class="empty_img empty_pending"></div>
                                 <div class="empty_text">{{ $t('group.noData') }}</div>
                             </div>
-                            <div v-else class="group-card-item" v-for="item in groupList" :key="item.teamId" @click="handleToGroup(item)">
+                            <div v-else class="group-card-item" 
+                                v-for="item in groupList" 
+                                :key="item.teamId" 
+                                @click="item.isJoined !== false ? handleToGroup(item) : null"
+                                :class="{ 'card-disabled': item.isJoined === false }">
                                 <div class="group-card-title">
                                     <span class="group-card-title-name">{{ item.teamName }}</span>
                                     <span v-if="item.isPublic" class="card-type card-type-public">{{ $t('group.public') }}</span>
@@ -82,14 +86,23 @@
                                     <el-button v-if="tab.name === 'mycreated'" text @click.stop="handleEditKl(item)">
                                         {{ $t('btnText.edit') }}
                                     </el-button>
-                                    <!-- 全部团队tab中，已加入的显示编辑按钮，未加入的显示申请加入按钮 -->
+                                    <!-- 全部团队tab中，我创建的显示编辑按钮 -->
                                     <el-button 
-                                        v-else-if="tab.name === 'all' && item.isJoined" 
+                                        v-else-if="tab.name === 'all' && item.isMyCreated" 
                                         text 
                                         @click.stop="handleEditKl(item)"
                                     >
                                         {{ $t('btnText.edit') }}
                                     </el-button>
+                                    <!-- 全部团队tab中，已加入但非我创建的显示退出按钮 -->
+                                    <el-button 
+                                        v-else-if="tab.name === 'all' && item.isJoined && !item.isMyCreated" 
+                                        text 
+                                        @click.stop="handleQuitTeam(item)"
+                                    >
+                                        {{ $t('group.quit') }}
+                                    </el-button>
+                                    <!-- 全部团队tab中，未加入的显示申请加入按钮 -->
                                     <el-button 
                                         v-else-if="tab.name === 'all' && !item.isJoined" 
                                         text
@@ -98,6 +111,14 @@
                                         @click.stop="handleApplyToJoin(item)"
                                     >
                                         {{ $t('group.applyToJoin') }}
+                                    </el-button>
+                                    <!-- 我加入的团队显示退出按钮 -->
+                                    <el-button 
+                                        v-else-if="tab.name === 'myjoined'" 
+                                        text 
+                                        @click.stop="handleQuitTeam(item)"
+                                    >
+                                        {{ $t('group.quit') }}
                                     </el-button>
                                 </div>
                             </div>
@@ -115,7 +136,10 @@
                                     class-name="group-name">
                                     <template #default="scope">
                                         <el-tooltip :content="scope.row.teamName" placement="top" >
-                                            <span class="group-name-row table-row-content" @click="handleToGroup(scope.row)">
+                                            <span 
+                                                class="group-name-row table-row-content" 
+                                                :class="{ 'name-disabled': scope.row.isJoined === false }"
+                                                @click="scope.row.isJoined !== false ? handleToGroup(scope.row) : null">
                                                 {{ scope.row.teamName }}
                                             </span>
                                         </el-tooltip>
@@ -147,14 +171,23 @@
                                         <el-button v-if="activeName === 'mycreated'" text @click="handleEditKl(scope.row)">
                                             {{ $t('btnText.edit') }}
                                         </el-button>
-                                        <!-- 全部团队tab中，已加入的显示编辑按钮，未加入的显示申请加入按钮 -->
+                                        <!-- 全部团队tab中，我创建的显示编辑按钮 -->
                                         <el-button 
-                                            v-else-if="activeName === 'all' && scope.row.isJoined" 
+                                            v-else-if="activeName === 'all' && scope.row.isMyCreated" 
                                             text 
                                             @click="handleEditKl(scope.row)"
                                         >
                                             {{ $t('btnText.edit') }}
                                         </el-button>
+                                        <!-- 全部团队tab中，已加入但非我创建的显示退出按钮 -->
+                                        <el-button 
+                                            v-else-if="activeName === 'all' && scope.row.isJoined && !scope.row.isMyCreated" 
+                                            text 
+                                            @click="handleQuitTeam(scope.row)"
+                                        >
+                                            {{ $t('group.quit') }}
+                                        </el-button>
+                                        <!-- 全部团队tab中，未加入的显示申请加入按钮 -->
                                         <el-button 
                                             v-else-if="activeName === 'all' && !scope.row.isJoined" 
                                             type="primary" 
@@ -163,6 +196,14 @@
                                             @click="handleApplyToJoin(scope.row)"
                                         >
                                             {{ $t('group.applyToJoin') }}
+                                        </el-button>
+                                        <!-- 我加入的团队显示退出按钮 -->
+                                        <el-button 
+                                            v-else-if="activeName === 'myjoined'" 
+                                            text 
+                                            @click="handleQuitTeam(scope.row)"
+                                        >
+                                            {{ $t('group.quit') }}
                                         </el-button>
                                     </template>
                                 </el-table-column>
@@ -327,6 +368,12 @@ const handleSwitch = (switchType: string) => {
     switchIcon.value = switchType;
 };
 const handleToGroup = async (row: any) => {
+    // 如果团队未加入，禁止进入详情页
+    if (row.isJoined === false) {
+        ElMessage.warning('您还未加入该团队，请先申请加入');
+        return;
+    }
+    
     localStorage.setItem('teamId', row.teamId);
     await router.push({ path: `/groupInfo`, query: { name: row.teamName, id: row.teamId } });
     let groupNav = navGroup.value;
@@ -356,21 +403,26 @@ const handlequeryTeamList = async (param: { teamType: string, page: number, page
             const joinedTeams = (joinedRes as any)?.teams || [];
             const createdTeams = (createdRes as any)?.teams || [];
             
+            // 创建我创建的团队ID集合
+            const createdTeamIds = new Set(createdTeams.map((team: any) => team.teamId));
+            
             // 合并已加入和创建的团队，标记为已加入
             const myTeams = [...joinedTeams, ...createdTeams];
             const myTeamIds = new Set(myTeams.map((team: any) => team.teamId));
             
-            // 处理公开团队，标记是否已加入
+            // 处理公开团队，标记是否已加入和是否我创建
             const processedPublicTeams = publicTeams.map((team: any) => ({
                 ...team,
                 isJoined: myTeamIds.has(team.teamId),
+                isMyCreated: createdTeamIds.has(team.teamId),
                 applying: false
             }));
             
-            // 处理我的团队，标记为已加入
+            // 处理我的团队，标记为已加入和是否我创建
             const processedMyTeams = myTeams.map((team: any) => ({
                 ...team,
                 isJoined: true,
+                isMyCreated: createdTeamIds.has(team.teamId),
                 applying: false
             }));
             
@@ -380,10 +432,10 @@ const handlequeryTeamList = async (param: { teamType: string, page: number, page
                 if (!allTeamsMap.has(team.teamId)) {
                     allTeamsMap.set(team.teamId, team);
                 } else {
-                    // 如果团队已存在，优先保留已加入的状态
+                    // 如果团队已存在，优先保留已加入和创建者的状态
                     const existingTeam = allTeamsMap.get(team.teamId);
                     if (team.isJoined) {
-                        allTeamsMap.set(team.teamId, { ...existingTeam, isJoined: true });
+                        allTeamsMap.set(team.teamId, { ...existingTeam, isJoined: true, isMyCreated: team.isMyCreated || existingTeam.isMyCreated });
                     }
                 }
             });
@@ -424,6 +476,55 @@ const handleApplyToJoin = async (team: any) => {
         ElMessage.error('申请加入团队失败，请重试');
     } finally {
         team.applying = false;
+    }
+};
+
+// 退出团队
+const handleQuitTeam = async (team: any) => {
+    try {
+        await ElMessageBox.confirm(
+            t('group.confirmQuit', { teamName: team.teamName }),
+            t('dialogTipText.tipsText'),
+            {
+                confirmButtonText: t('btnText.confirm'),
+                cancelButtonText: t('btnText.cancel'),
+                type: 'warning',
+            }
+        );
+        
+        // 使用当前团队的 teamId 获取当前用户的 user_sub
+        const response = await GroupAPI.getCurrentUserRole(team.teamId);
+        let userSub = '';
+        if (response) {
+            const data = response as any;
+            userSub = data.userSub || data.user_sub || '';
+        }
+        
+        if (!userSub) {
+            ElMessage.error('无法获取当前用户信息，请重试');
+            return;
+        }
+        
+        await GroupAPI.quitTeam({
+            teamId: team.teamId,
+            userSubs: [userSub]
+        });
+        
+        ElMessage.success(t('group.quitSuccess', { teamName: team.teamName }));
+        
+        // 刷新团队列表
+        let param = {
+            teamType: activeName.value,
+            teamName: teamSearchName.value,
+            page: currentPage.value,
+            pageSize: currentPageSize.value
+        };
+        handlequeryTeamList(param);
+    } catch (error: any) {
+        if (error !== 'cancel') {
+            console.error('退出团队失败:', error);
+            ElMessage.error(t('group.quitFailed'));
+        }
     }
 };
 
