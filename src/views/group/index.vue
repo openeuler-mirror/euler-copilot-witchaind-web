@@ -214,7 +214,7 @@ const { t, locale} = useI18n();
 const groupStore = useGroupStore();
 const { setCurTeamInfo } = groupStore;
 
-const activeName = ref('allTeams');
+const activeName = ref('all');
 const currentRow = ref({});
 const dialogueType = ref('create');
 let groupList = ref<any>([]);
