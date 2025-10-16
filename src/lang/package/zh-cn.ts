@@ -84,6 +84,8 @@ export default {
     datasetManagement: '数据集管理',
     testingManagement: '评测管理',
     create: '创建',
+    allTeams: '全部',
+    applyToJoin: '申请加入',
   },
   groupDetail: {
     memberPermission: '成员管理',

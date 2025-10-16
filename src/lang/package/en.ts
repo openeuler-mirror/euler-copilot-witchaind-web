@@ -78,6 +78,8 @@ export default {
     datasetManagement: 'Dataset',
     testingManagement: 'Testing',
     create: 'Create',
+    allTeams: 'All',
+    applyToJoin: 'Apply',
   },
   groupDetail: {
     memberPermission: 'Member Management',
