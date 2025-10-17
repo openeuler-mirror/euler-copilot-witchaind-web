@@ -249,7 +249,7 @@
                 <div
                   class="kl-card-more-icon"
                   @click.stop>
-                  <span class="icon-more"></span>
+                  <MoreIcon />
                 </div>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -559,6 +559,7 @@ import {
 import TextMoreTootip from '@/components/TextMoreTootip/index.vue';
 import TextSingleTootip from '@/components/TextSingleTootip/index.vue';
 import CustomLoading from '@/components/CustomLoading/index.vue';
+import MoreIcon from '@/components/MoreIcon/index.vue';
 
 import { debounce } from 'lodash';
 import KbAppAPI, { ITaskType } from '@/api/kbApp';

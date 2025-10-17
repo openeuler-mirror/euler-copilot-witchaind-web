@@ -195,21 +195,9 @@
 
           .kl-card-more-icon {
             height: 24px;
-            .icon-more{
-              display: inline-block;
-              cursor: pointer;
-              width: 24px;
-              height: 24px;
-              background-image: var(--more-icon, url(@/assets/svg/more.svg));
-              background-repeat: no-repeat;
-              background-size: 100% 100%;
-              &:hover {
-                background-image: var(--more-hover-icon, url(@/assets/svg/more_hover.svg));
-              }
-              &:active,&:focus {
-                background-image: var(--more-active-icon, url(@/assets/svg/more_active.svg));
-              }
-            }
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
         }
 
