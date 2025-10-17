@@ -285,6 +285,25 @@ let maxFileSizesInfo = computed(() => {
   }
 });
 
+let singleFileSizeInfo = computed(() => {
+  if (props.singleFileSize <= 0) return '0MB';
+  if (props.singleFileSize < 1) {
+    return (props.singleFileSize * 1024).toFixed(0) + 'MB';
+  } else {
+    return props.singleFileSize + 'GB';
+  }
+});
+
+// 专门用于错误提示的MB数值（不带单位）
+let singleFileSizeMB = computed(() => {
+  if (props.singleFileSize <= 0) return 0;
+  if (props.singleFileSize < 1) {
+    return (props.singleFileSize * 1024).toFixed(0);
+  } else {
+    return (props.singleFileSize * 1024).toFixed(0);
+  }
+});
+
 // 表格实例引用
 const fileTableRef = ref();
 const handleSelectionChange = (val: TableRow[]) => {
@@ -433,7 +452,7 @@ const uploadFiles = () => {
     if (handleLimitSize(fileTableList.data)) {
       ElMessage({
         showClose: true,
-        message: t('dialogTipText.singleFileSize'),
+        message: t('dialogTipText.singleFileSize', { size: singleFileSizeMB.value }),
         icon: IconError,
         customClass: 'o-message--error',
         duration: 3000,
@@ -510,7 +529,7 @@ const uploadKnowledgeFile = () => {
     if (handleLimitSize(fileTableList.data)) {
       ElMessage({
         showClose: true,
-        message: t('dialogTipText.singleFileSize'),
+        message: t('dialogTipText.singleFileSize', { size: singleFileSizeMB.value }),
         icon: IconError,
         customClass: 'o-message--error',
         duration: 3000,

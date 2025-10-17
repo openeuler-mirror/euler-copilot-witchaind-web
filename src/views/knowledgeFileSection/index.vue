@@ -168,57 +168,60 @@
             </template>
           </el-dropdown>
         </div>
-        <div v-if="!['pending','running','failed'].includes(fileInfo?.docTask?.taskStatus)" class="kf-section-container-table-box">
-          <el-table
-            :data="fileTableList.data"
-            ref="fileSectionTable"
-            @selection-change="handleSelectionChange">
-            <template #empty>
-              <div class="table-empty-box">
-                <div class="table-empty-img"></div>
-                <div>暂无数据</div>
-              </div>
-            </template>
-            <el-table-column
-              type="selection"
-              class-name="kf-selection"
-              width="40" />
-
-            <el-table-column
-              prop="name"
-              :label="$t('btnText.selectAll')"
-              class-name="kf-file-content">
-              <template #default="scope">
-                <div class="kf-file-content-box">
-                  <div class="kf-file-content-text">
-                      <span style="white-space: pre-wrap;" v-for="(itemText,index) in scope.row?.text?.split('\n')">
-                        <span v-if="index === 0" :class="`text-type-${scope.row.chunkType} text-type-tag`">
-                          {{ textType[scope.row.chunkType] }}
-                        </span>
-                        <span v-html="itemText"></span>
-                      </span>
-                  </div>
-                  <div class="kf-file-content-ops">
-                    <el-button text @click="handleEditContent(scope.row)">
-                        {{ $t('btnText.edit') }}
-                    </el-button>
-                    <el-switch
-                      v-model:model-value="scope.row.enabled"
-                      @change="handleSwitch(scope.row)"
-                      style="--el-switch-on-color: #24ab36; --el-switch-off-color: #c3cedf" />
-                  </div>
+        <div v-if="!['pending','running','failed'].includes(fileInfo?.docTask?.taskStatus)" class="kf-section-container-content">
+          <div class="kf-section-container-table-box">
+            <el-table
+              :data="fileTableList.data"
+              ref="fileSectionTable"
+              @selection-change="handleSelectionChange">
+              <template #empty>
+                <div class="table-empty-box">
+                  <div class="table-empty-img"></div>
+                  <div>暂无数据</div>
                 </div>
               </template>
-            </el-table-column>
-          </el-table>
-          <el-pagination
-            v-if=" totalCount > currentPageSize"
-            v-model:current-page="currentPage"
-            v-model:page-size="currentPageSize"
-            :layout="pagination.layout"
-            :total="totalCount"
-            @change="handleChangePage"
-            popper-class="fileSectionPage" />
+              <el-table-column
+                type="selection"
+                class-name="kf-selection"
+                width="40" />
+
+              <el-table-column
+                prop="name"
+                :label="$t('btnText.selectAll')"
+                class-name="kf-file-content">
+                <template #default="scope">
+                  <div class="kf-file-content-box">
+                    <div class="kf-file-content-text">
+                        <span style="white-space: pre-wrap;" v-for="(itemText,index) in scope.row?.text?.split('\n')">
+                          <span v-if="index === 0" :class="`text-type-${scope.row.chunkType} text-type-tag`">
+                            {{ textType[scope.row.chunkType] }}
+                          </span>
+                          <span v-html="itemText"></span>
+                        </span>
+                    </div>
+                    <div class="kf-file-content-ops">
+                      <el-button text @click="handleEditContent(scope.row)">
+                          {{ $t('btnText.edit') }}
+                      </el-button>
+                      <el-switch
+                        v-model:model-value="scope.row.enabled"
+                        @change="handleSwitch(scope.row)"
+                        style="--el-switch-on-color: #24ab36; --el-switch-off-color: #c3cedf" />
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="kf-section-container-pagination" v-if="totalCount > currentPageSize">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="currentPageSize"
+              :layout="pagination.layout"
+              :total="totalCount"
+              @change="handleChangePage"
+              popper-class="fileSectionPage" />
+          </div>
         </div>
         <div class="empty_box" v-if="fileInfo?.docTask?.taskStatus === 'pending'">
           <div class="empty_img empty_pending"></div>
@@ -247,7 +250,7 @@
     type="textarea"
     :autosize="{ minRows: 10}"
     :placeholder="$t('assetFile.contentPlaceholder')"
-    maxlength="1000"
+    maxlength="8096"
     :show-word-limit="true"
   />
     <template #footer>

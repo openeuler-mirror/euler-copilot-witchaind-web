@@ -468,7 +468,7 @@ export default {
     confirmCancelAnalytic: '确认取消解析？点击确认后将停止解析，请谨慎操作。',
     fileZipFormat: '文件支持.zip格式，最多支持上传5个资产库，资产库总大小不超过5GB',
     fileAllFormat:
-      '文件支持.xlsx,.pdf,.doc,.docx,.txt,.pptx,.html,.json,.yaml,.md,.zip,.jpeg,.png格式，最多支持上传128个文件，文件总大小不超过500MB',
+      '文件支持.xlsx,.pdf,.doc,.docx,.txt,.pptx,.html,.json,.yaml,.md,.zip,.jpeg,.png格式，最多支持上传{maxFileNum}个文件，文件总大小不超过{maxSize}',
     fileDataSetFormat:
       '文件支持xlsx、yaml和json格式导入，最多支持上传10个文件，每个文件包含的数据量不超过512条',
     continueAdd: '您仍可以通过拖拽文件到下方列表区域进行文件添加',
@@ -476,7 +476,7 @@ export default {
     dragFile: '将文件拖到此处',
     fileName: '文件名',
     fileSize: '大小',
-    singleFileSize: '单个文件大小不能超过20MB',
+    singleFileSize: '单个文件大小不能超过{size}MB',
     fileNums: '文件数',
     fileSizes: '文件大小',
     confirmDelDataset: '确定删除选择的数据集吗？',

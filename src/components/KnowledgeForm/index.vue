@@ -186,21 +186,13 @@
           </el-select>
         </el-form-item>
         
-        <el-form-item label="Reranker" prop="enableReranker">
-          <el-switch
-            v-model="ruleForm.enableReranker"
-            @change="handleRerankerToggle" />
-        </el-form-item>
-        
         <el-form-item 
           label="Reranker" 
-          prop="rerankerModel"
-          v-if="ruleForm.enableReranker">
+          prop="rerankerModel">
           <el-select
             v-model="ruleForm.rerankerModel"
             placeholder="请选择Reranker"
-            :suffix-icon="IconCaretDown"
-            :disabled="!ruleForm.enableReranker">
+            :suffix-icon="IconCaretDown">
             <el-option
               v-for="item in rerankerOptions"
               :key="item.value"
@@ -273,7 +265,6 @@ interface RuleForm {
   embeddingModel: string;
   tokenizer: string;
   // 检索设置
-  enableReranker: boolean;
   rerankerModel: string;
   // 其他
   docTypes: any[];
@@ -309,7 +300,6 @@ const ruleForm = ref<RuleForm>({
   embeddingModel: '',
   tokenizer: '',
   // 检索设置
-  enableReranker: true, // 默认开启
   rerankerModel: '',
   // 其他
   docTypes: [],
@@ -406,7 +396,6 @@ onMounted(async () => {
           uploadCountLimit: props.formData?.uploadCountLimit || 128,
           chunkMethod: props.formData?.chunkMethod || 'semantic',
           chunkIdentifier: props.formData?.chunkIdentifier || '\\n\\n',
-          enableReranker: props.formData?.enableReranker || false,
           rerankerModel: props.formData?.rerankerModel || '',
         } as RuleForm)
       )
@@ -447,8 +436,10 @@ onMounted(async () => {
     ruleForm.value.embeddingModel = emBeddingModelOptions.value?.[0].value || '';
     ruleForm.value.defaultParseMethod = parserMethodOptions.value?.[0].value || '';
     // 默认选择jaccard dis reranker
-    const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
-    ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
+    if (!ruleForm.value.rerankerModel) {
+      const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
+      ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
+    }
   }
 });
 
@@ -519,19 +510,6 @@ const handleSectionClick = (sectionKey: string) => {
   activeSection.value = sectionKey;
 };
 
-const handleRerankerToggle = (value: string | number | boolean) => {
-  const boolValue = Boolean(value);
-  if (!boolValue) {
-    // 关闭Reranker时，清空相关设置
-    ruleForm.value.rerankerModel = '';
-  } else {
-    // 开启Reranker时，设置默认值
-    if (!ruleForm.value.rerankerModel) {
-      const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
-      ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
-    }
-  }
-};
 
 const rules = reactive<FormRules<RuleForm>>({
   // 基本设置
@@ -630,7 +608,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       embeddingModel: ruleForm.value.embeddingModel,
       tokenizer: ruleForm.value?.tokenizer?.toLocaleLowerCase(),
       // 检索设置
-      enableReranker: ruleForm.value.enableReranker,
+      enableReranker: true, // 固定为true，始终启用reranker
       rerankerModel: ruleForm.value.rerankerModel,
       enableCompression: false, // 固定为false，不再提供UI配置
       enableDocumentCategory: false, // 固定为false，不再提供UI配置
