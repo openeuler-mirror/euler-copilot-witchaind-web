@@ -460,7 +460,7 @@ export default {
     fileZipFormat:
       'The file must be in .zip format. A maximum of five asssets with a total size of 5 GB can be uploaded.',
     fileAllFormat:
-      'The file can be in .xlsx,.pdf,.doc,.docx,.txt,.pptx,.html,.json,.yaml,.md,.jpeg,.png or .zip format. A maximum of 100 files with a total size of 500 MB can be uploaded.',
+      'The file can be in .xlsx,.pdf,.doc,.docx,.txt,.pptx,.html,.json,.yaml,.md,.jpeg,.png or .zip format. A maximum of {maxFileNum} files with a total size of {maxSize} can be uploaded.',
     fileDataSetFormat:
       'The file supports import in xlsx, yaml and json formats. Up to 10 files can be uploaded, and each file contains no more than 512 pieces of data.',
     continueAdd: 'You can drag files to the list area below to add more.',
@@ -468,7 +468,7 @@ export default {
     dragFile: 'Drop files here.',
     fileName: 'File name',
     fileSize: 'Size',
-    singleFileSize: 'The size of a file cannot exceed 20 MB.',
+    singleFileSize: 'The size of a file cannot exceed {size}MB.',
     fileNums: 'File Number',
     fileSizes: 'File Size',
     confirmDelDataset: 'Are you sure to delete the selected dataset?',

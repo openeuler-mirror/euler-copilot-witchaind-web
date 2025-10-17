@@ -429,11 +429,11 @@
     :title="$t('btnText.importFile')">
     <Upload
       :singleFileLimit="true"
-      :singleFileSize="0.05"
-      :tipText="$t('dialogTipText.fileAllFormat')"
+      :singleFileSize="uploadLimits.singleFileSize"
+      :tipText="dynamicTipText"
       accept=".xlsx,.pdf,.doc,.docx,.txt,.pptx,.html,.md,.json,.yaml,.md,.zip,.jpeg,.png"
-      :maxFileNum="128"
-      :maxSize="0.488"
+      :maxFileNum="uploadLimits.maxFileNum"
+      :maxSize="uploadLimits.maxSize"
       :handleUploadMyFile="handleUploadMyFile"
       :handleQueryTaskList="handleQueryTaskList"
       :handleCancelVisible="handleCancelVisible"
@@ -663,6 +663,28 @@ const searchPayload = ref<any>({
 const kbInfo = ref<any>({});
 const checkedFilterList = ref([]);
 const filterCategoryList = ref<DocumentType[]>([]);
+
+// 动态计算Upload组件的限制参数
+const uploadLimits = computed(() => {
+  const countLimit = kbInfo.value?.uploadCountLimit || 100;
+  const sizeLimitMB = kbInfo.value?.uploadSizeLimit || 512; // MB
+  return {
+    maxFileNum: countLimit,
+    maxSize: sizeLimitMB / 1024, // 转换为GB：MB ÷ 1024
+    singleFileSize: 256 / 1024, // 256MB转换为GB（保持单个文件限制为256MB）
+  };
+});
+
+// 动态生成提示文本
+const dynamicTipText = computed(() => {
+  const countLimit = kbInfo.value?.uploadCountLimit || 100;
+  const sizeLimitMB = kbInfo.value?.uploadSizeLimit || 512;
+  const sizeText = sizeLimitMB >= 1024 ? `${(sizeLimitMB / 1024).toFixed(1)}GB` : `${sizeLimitMB}MB`;
+  return t('dialogTipText.fileAllFormat', {
+    maxFileNum: countLimit,
+    maxSize: sizeText
+  });
+});
 const pollingKfTimer = ref();
 const filterStatusList = ref();
 const filterEnableList = ref();
