@@ -1,6 +1,6 @@
 
 body[theme='dark'] {
-    --o-main-bg: var(--bg-dark, url('/src/assets/images/dark_bg_1.webp'));
+    --o-main-bg: var(--bg-dark, url('@/assets/images/dark_bg_1.webp'));
     --o-bg-dialog:var(--o-bg-color-base);
     --o-button-bg:rgb(99 149 253);
     --o-tag-text-color:rgb(99 149 253);
@@ -15,16 +15,16 @@ body[theme='dark'] {
     --o-tag-code-bg:rgb(168 67 205 0.3);
     --o-tag-qa-color:rgb(235 175 0);
     --o-tag-qa-bg:rgb(66 53 0);
-    --o-empty-img-pending: var(--empty-pending-dark, url('/src/assets/images/empty_pending_dark.svg'));
-    --o-empty-img-failed: var(--empty-failed-dark, url('/src/assets/images/empty_failed_dark.svg'));
-    --o-empty-img-running: var(--empty-running-dark, url('/src/assets/images/empty_running_dark.svg'));
-    --o-task-list-icon: var(--task-list-dark, url('/src/assets/svg/dark_taskList.svg'));
-    --o-task-score-icon: var(--task-score-dark, url('/src/assets/svg/dark_taskScore.svg'));
+    --o-empty-img-pending: var(--empty-pending-dark, url('@/assets/images/empty_pending_dark.svg'));
+    --o-empty-img-failed: var(--empty-failed-dark, url('@/assets/images/empty_failed_dark.svg'));
+    --o-empty-img-running: var(--empty-running-dark, url('@/assets/images/empty_running_dark.svg'));
+    --o-task-list-icon: var(--task-list-dark, url('@/assets/svg/dark_taskList.svg'));
+    --o-task-score-icon: var(--task-score-dark, url('@/assets/svg/dark_taskScore.svg'));
     --o-task-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
 }
 
 body[theme='light'] {
-    --o-main-bg: var(--bg-light, url('/src/assets/images/light_bg_1.webp'));
+    --o-main-bg: var(--bg-light, url('@/assets/images/light_bg_1.webp'));
     --o-bg-dialog:var(--o-bg-color-base);
     --o-button-bg:rgb(99 149 253);
     --o-tag-text-color:rgb(99 149 253);
@@ -39,10 +39,10 @@ body[theme='light'] {
     --o-tag-code-bg:rgb(189 69 232 0.3);
     --o-tag-qa-color:rgb(235 175 0);
     --o-tag-qa-bg:rgb(249 235 184);
-    --o-empty-img-pending: var(--empty-pending-light, url('/src/assets/images/empty_pending.svg'));
-    --o-empty-img-failed: var(--empty-failed-light, url('/src/assets/images/empty_failed.svg'));
-    --o-empty-img-running: var(--empty-running-light, url('/src/assets/images/empty_running.svg'));
-    --o-task-list-icon: var(--task-list-light, url('/src/assets/svg/light_taskList.svg'));
-    --o-task-score-icon: var(--task-score-light, url('/src/assets/svg/light_taskScore.svg'));
+    --o-empty-img-pending: var(--empty-pending-light, url('@/assets/images/empty_pending.svg'));
+    --o-empty-img-failed: var(--empty-failed-light, url('@/assets/images/empty_failed.svg'));
+    --o-empty-img-running: var(--empty-running-light, url('@/assets/images/empty_running.svg'));
+    --o-task-list-icon: var(--task-list-light, url('@/assets/svg/light_taskList.svg'));
+    --o-task-score-icon: var(--task-score-light, url('@/assets/svg/light_taskScore.svg'));
     --o-task-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
 }
