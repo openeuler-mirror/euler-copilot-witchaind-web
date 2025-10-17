@@ -45,10 +45,10 @@ export function initCssAssetResolver() {
     // 加载图标（从 icons 目录）
     root.style.setProperty('--task-loading', `url('${getAssetUrl('icons/taskLoading.png')}')`);
     
-    // 更多操作图标
-    root.style.setProperty('--more-icon', `url('${getSvgUrl('more.svg')}')`);
-    root.style.setProperty('--more-hover-icon', `url('${getSvgUrl('more_hover.svg')}')`);
-    root.style.setProperty('--more-active-icon', `url('${getSvgUrl('more_active.svg')}')`);
+    // 更多操作图标 - 已迁移到 MoreIcon 组件，不再需要 CSS 变量
+    // root.style.setProperty('--more-icon', `url('${getSvgUrl('more.svg')}')`);
+    // root.style.setProperty('--more-hover-icon', `url('${getSvgUrl('more_hover.svg')}')`);
+    // root.style.setProperty('--more-active-icon', `url('${getSvgUrl('more_active.svg')}')`);
     
     // 登录背景
     root.style.setProperty('--login-bg-light', `url('${getImageUrl('login-background-light.webp')}')`);

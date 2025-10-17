@@ -36,7 +36,7 @@ export function removeClass(ele: HTMLElement, cls: string) {
  * @returns {Boolean}
  */
 export function isExternal(path: string) {
-  const isExternal = /^(https?:|http?:|mailto:|tel:)/.test(path);
+  const isExternal = /^(https?:|http?:|mailto:|tel:|data:)/.test(path);
   return isExternal;
 }
 
@@ -92,7 +92,7 @@ export function resolveAssetUrl(assetPath: string): string {
   }
   
   // 如果不在 iframe 环境中，使用默认处理
-  const isIframeMode = import.meta.env.VITE_IS_IFRAME_MODE === 'true' || isInIframe();
+  const isIframeMode = String(import.meta.env.VITE_IS_IFRAME_MODE) === 'true' || isInIframe();
   if (!isIframeMode) {
     return assetPath;
   }
