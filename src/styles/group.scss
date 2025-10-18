@@ -104,8 +104,9 @@
                   display: grid;
                   grid-template-columns: repeat(auto-fill, 339px);
                   gap: 16px;
-                  max-height: 660px;
+                  max-height: calc(100vh - 500px);
                   overflow-y: auto;
+                  overflow-x: hidden;
                   .group-card-item {
 
                         width: 339px;
@@ -239,8 +240,9 @@
                   }
 
                   .el-table__body-wrapper{
-                    max-height: 660px;
-                    overflow-y: auto
+                    max-height: calc(100vh - 500px);
+                    overflow-y: auto;
+                    overflow-x: hidden;
                   }
               
                   .group-name-row {
