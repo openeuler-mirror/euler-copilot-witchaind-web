@@ -179,6 +179,15 @@
                               line-height: 16px;
                               display: flex;
                               align-items: center;
+                              
+                              .author-name {
+                                max-width: 120px;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                white-space: nowrap;
+                                display: inline-block;
+                              }
+                              
                               .member-count{
                                 margin-left: 16px;
                                 display: flex;

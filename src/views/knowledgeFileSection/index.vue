@@ -255,10 +255,18 @@
   />
     <template #footer>
       <div class="dialog-footer">
-        <el-button type="primary" @click="handleSaveContent">
+        <el-button 
+          type="primary" 
+          @click="handleSaveContent"
+          :loading="saveContentLoading"
+          :disabled="saveContentLoading">
           {{ $t('btnText.confirm') }}
         </el-button>
-        <el-button @click="contentDialogVisible = false">{{ $t('btnText.cancel') }}</el-button>
+        <el-button 
+          @click="contentDialogVisible = false"
+          :disabled="saveContentLoading">
+          {{ $t('btnText.cancel') }}
+        </el-button>
       </div>
     </template>
   </el-dialog>
@@ -312,6 +320,7 @@ const filteTypeShow = ref(false);
 const isHoverIndex = ref();
 const batchDownBth = ref(false);
 const contentDialogVisible = ref(false);
+const saveContentLoading = ref(false);
 const rowData = ref();
 const store = useGroupStore();
 const { curTeamInfo } = storeToRefs(store);
@@ -556,7 +565,8 @@ const handleEditContent= (row: any) => {
   rowData.value = row;
 }
 const handleSaveContent = () => {
-  contentDialogVisible.value = false;
+  saveContentLoading.value = true;
+  
   KfAppAPI.updateFileSection({
     chunkId: rowData.value.chunkId
   },
@@ -564,6 +574,14 @@ const handleSaveContent = () => {
       text: sectionText.value,
     }
   ).then(() => {
+    ElMessage({
+      showClose: true,
+      message: t('opsMessage.opsSuccess'),
+      icon: IconSuccess,
+      customClass: 'o-message--success',
+      duration: 3000,
+    });
+    
     let payload: any = {
       docId: route.query.file_id,
       page: currentPage.value,
@@ -574,6 +592,17 @@ const handleSaveContent = () => {
       payload.types = fileType.value;
     }
     handleFileSectionData(payload);
-  })
+    contentDialogVisible.value = false;
+  }).catch((error) => {
+    console.error('保存内容失败:', error);
+    ElMessage({
+      showClose: true,
+      message: t('opsMessage.opsFailed') || '保存失败，请重试',
+      type: 'error',
+      duration: 3000,
+    });
+  }).finally(() => {
+    saveContentLoading.value = false;
+  });
 }
 </script>
