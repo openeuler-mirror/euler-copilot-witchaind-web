@@ -5,6 +5,7 @@ interface TeamList {
   teamId: string;
   teamName: string;
   description: string;
+  authorId: string;
   authorName: string;
   memberCount: string;
   isPublic: boolean;
@@ -20,6 +21,7 @@ export const useGroupStore = defineStore(
       teamId: '',
       teamName: '',
       description: '',
+      authorId: '',
       authorName: '',
       memberCount: '',
       isPublic: false,

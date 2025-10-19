@@ -300,6 +300,25 @@ const initChart = async () => {
             lineStyle: {
                 color: 'rgb(141,152,170)'
             },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                borderColor: isDarkMode ? '#666' : '#ccc',
+                borderWidth: 1,
+                textStyle: {
+                    color: isDarkMode ? '#fff' : '#333',
+                    fontSize: 12
+                },
+                formatter: function(params) {
+                    const dataIndex = params[0].dataIndex;
+                    const value = params[0].value;
+                    const name = params[0].name;
+                    return `${name}<br/>${t('testing.scoreY')}: ${value.toFixed(2)}`;
+                }
+            },
             grid: {
                 left: '1%',    // 左侧距离容器3%宽度（百分比更适配响应式）
                 right: '1%',   // 右侧距离容器3%宽度

@@ -61,8 +61,7 @@
                             <div v-else class="group-card-item" 
                                 v-for="item in groupList" 
                                 :key="item.teamId" 
-                                @click="item.isJoined !== false ? handleToGroup(item) : null"
-                                :class="{ 'card-disabled': item.isJoined === false }">
+                                @click="handleToGroup(item)">
                                 <div class="group-card-title">
                                     <span class="group-card-title-name">{{ item.teamName }}</span>
                                     <span v-if="item.isPublic" class="card-type card-type-public">{{ $t('group.public') }}</span>
@@ -76,7 +75,9 @@
                                 </div>
                                 <div class="group-card-footer">
                                     <div class="info">
-                                        @{{ item.authorName }}
+                                        <el-tooltip :content="`@${item.authorName}`" placement="top" :disabled="item.authorName && item.authorName.length <= 8">
+                                            <span class="author-name">@{{ item.authorName }}</span>
+                                        </el-tooltip>
                                         <span class="member-count">
                                             <img :src="getImageUrl('member_count.svg')" />
                                             {{ item.memberCount }}{{ $t('group.people') }}
@@ -138,8 +139,7 @@
                                         <el-tooltip :content="scope.row.teamName" placement="top" >
                                             <span 
                                                 class="group-name-row table-row-content" 
-                                                :class="{ 'name-disabled': scope.row.isJoined === false }"
-                                                @click="scope.row.isJoined !== false ? handleToGroup(scope.row) : null">
+                                                @click="handleToGroup(scope.row)">
                                                 {{ scope.row.teamName }}
                                             </span>
                                         </el-tooltip>
@@ -368,9 +368,9 @@ const handleSwitch = (switchType: string) => {
     switchIcon.value = switchType;
 };
 const handleToGroup = async (row: any) => {
-    // 如果团队未加入，禁止进入详情页
+    // 如果团队未加入，显示提示消息并阻止进入详情页
     if (row.isJoined === false) {
-        ElMessage.warning('您还未加入该团队，请先申请加入');
+        ElMessage.warning(t('group.notJoinedTeam'));
         return;
     }
     

@@ -90,6 +90,7 @@ export default {
     confirmQuit: '确定要退出团队"{teamName}"吗？',
     quitSuccess: '已成功退出团队"{teamName}"',
     quitFailed: '退出团队失败，请重试',
+    notJoinedTeam: '您还未加入该团队，请先申请加入',
   },
   groupDetail: {
     memberPermission: '成员管理',

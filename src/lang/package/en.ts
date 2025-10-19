@@ -84,6 +84,7 @@ export default {
     confirmQuit: 'Are you sure you want to quit team "{teamName}"?',
     quitSuccess: 'Successfully quit team "{teamName}"',
     quitFailed: 'Failed to quit team. Please try again.',
+    notJoinedTeam: 'You have not joined this team yet. Please apply to join first.',
   },
   groupDetail: {
     memberPermission: 'Member Management',
