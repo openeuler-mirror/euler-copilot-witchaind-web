@@ -1,6 +1,6 @@
 .group-container {
     width: 100%;
-    height: calc(100vh - 300px);
+    min-height: calc(100vh - 300px);
     padding: 0 24px;
     min-width: 820px;
 
@@ -9,8 +9,7 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        height: calc(100vh - 270px);
-        overflow-y: auto;
+        min-height: calc(100vh - 270px);
         border-radius: 4px;
         transform: translateY(-42px);
         .el-tabs--border-card{
@@ -104,9 +103,7 @@
                   display: grid;
                   grid-template-columns: repeat(auto-fill, 339px);
                   gap: 16px;
-                  max-height: calc(100vh - 500px);
-                  overflow-y: auto;
-                  overflow-x: hidden;
+                  min-height: 200px;
                   .group-card-item {
 
                         width: 339px;
@@ -240,9 +237,7 @@
                   }
 
                   .el-table__body-wrapper{
-                    max-height: calc(100vh - 500px);
-                    overflow-y: auto;
-                    overflow-x: hidden;
+                    min-height: 200px;
                   }
               
                   .group-name-row {
@@ -335,7 +330,7 @@
             padding: 16px 24px 0 !important;
             background-color: var(--o-bg-color-base);
             border-radius: 0 8px 8px 8px;
-            height: calc(100vh - 322px);
+            min-height: calc(100vh - 322px);
           }
           .el-tabs__header{
             margin-bottom: 0px;

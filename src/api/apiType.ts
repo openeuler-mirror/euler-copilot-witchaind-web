@@ -14,6 +14,8 @@ export interface CreateKbRequest {
   // 检索设置
   enableReranker: boolean;
   rerankerModel: string;
+  rerankMethod?: string; // 后端需要的reranker方法字段
+  rerankName?: string; // 后端需要的reranker名称字段
   enableCompression: boolean;
   enableDocumentCategory: boolean;
   enableContextAssociation: boolean;
@@ -38,6 +40,8 @@ export interface UpdateKbRequest {
   // 检索设置
   enableReranker: boolean;
   rerankerModel: string;
+  rerankMethod?: string; // 后端需要的reranker方法字段
+  rerankName?: string; // 后端需要的reranker名称字段
   enableCompression: boolean;
   enableDocumentCategory: boolean;
   enableContextAssociation: boolean;

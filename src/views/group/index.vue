@@ -83,29 +83,25 @@
                                             {{ item.memberCount }}{{ $t('group.people') }}
                                         </span>
                                     </div>
-                                    <!-- 我创建的团队显示编辑按钮 -->
-                                    <el-button v-if="tab.name === 'mycreated'" text @click.stop="handleEditKl(item)">
-                                        {{ $t('btnText.edit') }}
-                                    </el-button>
-                                    <!-- 全部团队tab中，我创建的显示编辑按钮 -->
+                                    <!-- 仅当isMyCreated=true时，显示编辑按钮 -->
                                     <el-button 
-                                        v-else-if="tab.name === 'all' && item.isMyCreated" 
+                                        v-if="item.isMyCreated" 
                                         text 
                                         @click.stop="handleEditKl(item)"
                                     >
                                         {{ $t('btnText.edit') }}
                                     </el-button>
-                                    <!-- 全部团队tab中，已加入但非我创建的显示退出按钮 -->
+                                    <!-- 当MyJoined=true且不是我创建的时候，显示退出按钮 -->
                                     <el-button 
-                                        v-else-if="tab.name === 'all' && item.isJoined && !item.isMyCreated" 
+                                        v-else-if="item.isJoined && !item.isMyCreated" 
                                         text 
                                         @click.stop="handleQuitTeam(item)"
                                     >
                                         {{ $t('group.quit') }}
                                     </el-button>
-                                    <!-- 全部团队tab中，未加入的显示申请加入按钮 -->
+                                    <!-- 除此之外，显示申请加入按钮 -->
                                     <el-button 
-                                        v-else-if="tab.name === 'all' && !item.isJoined" 
+                                        v-else
                                         text
                                         size="small"
                                         :loading="item.applying"
@@ -113,20 +109,12 @@
                                     >
                                         {{ $t('group.applyToJoin') }}
                                     </el-button>
-                                    <!-- 我加入的团队显示退出按钮 -->
-                                    <el-button 
-                                        v-else-if="tab.name === 'myjoined'" 
-                                        text 
-                                        @click.stop="handleQuitTeam(item)"
-                                    >
-                                        {{ $t('group.quit') }}
-                                    </el-button>
                                 </div>
                             </div>
                         </div>
                         <!-- 列表布局 -->
                         <div class="group-table-box" v-else>
-                            <el-table :data="groupList" :border="true" max-height="640" >
+                            <el-table :data="groupList" :border="true" >
                                 <template #empty>
                                     <div class="table-empty-box">
                                         <div class="table-empty-img"></div>
@@ -167,43 +155,31 @@
                                 </el-table-column>
                                 <el-table-column prop="action" :label="$t('btnText.operation')" width="120">
                                     <template #default="scope">
-                                        <!-- 我创建的团队显示编辑按钮 -->
-                                        <el-button v-if="activeName === 'mycreated'" text @click="handleEditKl(scope.row)">
-                                            {{ $t('btnText.edit') }}
-                                        </el-button>
-                                        <!-- 全部团队tab中，我创建的显示编辑按钮 -->
+                                        <!-- 仅当isMyCreated=true时，显示编辑按钮 -->
                                         <el-button 
-                                            v-else-if="activeName === 'all' && scope.row.isMyCreated" 
+                                            v-if="scope.row.isMyCreated" 
                                             text 
                                             @click="handleEditKl(scope.row)"
                                         >
                                             {{ $t('btnText.edit') }}
                                         </el-button>
-                                        <!-- 全部团队tab中，已加入但非我创建的显示退出按钮 -->
+                                        <!-- 当MyJoined=true且不是我创建的时候，显示退出按钮 -->
                                         <el-button 
-                                            v-else-if="activeName === 'all' && scope.row.isJoined && !scope.row.isMyCreated" 
+                                            v-else-if="scope.row.isJoined && !scope.row.isMyCreated" 
                                             text 
                                             @click="handleQuitTeam(scope.row)"
                                         >
                                             {{ $t('group.quit') }}
                                         </el-button>
-                                        <!-- 全部团队tab中，未加入的显示申请加入按钮 -->
+                                        <!-- 除此之外，显示申请加入按钮 -->
                                         <el-button 
-                                            v-else-if="activeName === 'all' && !scope.row.isJoined" 
+                                            v-else
                                             type="primary" 
                                             size="small"
                                             :loading="scope.row.applying"
                                             @click="handleApplyToJoin(scope.row)"
                                         >
                                             {{ $t('group.applyToJoin') }}
-                                        </el-button>
-                                        <!-- 我加入的团队显示退出按钮 -->
-                                        <el-button 
-                                            v-else-if="activeName === 'myjoined'" 
-                                            text 
-                                            @click="handleQuitTeam(scope.row)"
-                                        >
-                                            {{ $t('group.quit') }}
                                         </el-button>
                                     </template>
                                 </el-table-column>
