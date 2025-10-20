@@ -426,9 +426,37 @@ const handlequeryTeamList = async (param: { teamType: string, page: number, page
             groupList.value = allTeams.slice(start, end);
             totalCount.value = allTeams.length;
         } else {
-            // 原有逻辑
+            // 获取指定类型的团队列表
             const res = await GroupAPI.teamList(param) as any;
-            groupList.value = res.teams;
+            const teams = res.teams || [];
+            
+            // 根据teamType正确设置isJoined和isMyCreated字段
+            if (param.teamType === 'mycreated') {
+                // 我创建的团队：isMyCreated=true, isJoined=true
+                groupList.value = teams.map((team: any) => ({
+                    ...team,
+                    isJoined: true,
+                    isMyCreated: true,
+                    applying: false
+                }));
+            } else if (param.teamType === 'myjoined') {
+                // 我加入的团队：isJoined=true, isMyCreated=false（因为这里只包含我加入但未创建的团队）
+                groupList.value = teams.map((team: any) => ({
+                    ...team,
+                    isJoined: true,
+                    isMyCreated: false,
+                    applying: false
+                }));
+            } else {
+                // 其他类型（如public）：根据实际情况设置，默认未加入未创建
+                groupList.value = teams.map((team: any) => ({
+                    ...team,
+                    isJoined: team.isJoined || false,
+                    isMyCreated: team.isMyCreated || false,
+                    applying: false
+                }));
+            }
+            
             totalCount.value = res.total;
         }
     } catch (error) {
