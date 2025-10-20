@@ -396,7 +396,8 @@ onMounted(async () => {
           uploadCountLimit: props.formData?.uploadCountLimit || 128,
           chunkMethod: props.formData?.chunkMethod || 'semantic',
           chunkIdentifier: props.formData?.chunkIdentifier || '\\n\\n',
-          rerankerModel: props.formData?.rerankerModel || '',
+          // 处理reranker字段映射：优先使用rerankerModel，如果没有则从rerankName获取
+          rerankerModel: props.formData?.rerankerModel || props.formData?.rerankName || '',
         } as RuleForm)
       )
     : ruleForm.value;
@@ -594,6 +595,9 @@ onMounted(() => {
 const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   await formEl.validate((valid) => {
+    // 根据选中的rerankerModel找到对应的method和name
+    const selectedReranker = rerankerOptions.value.find(item => item.value === ruleForm.value.rerankerModel);
+    
     let payload = {
       // 基本设置
       kbName: ruleForm.value.kbName,
@@ -610,6 +614,9 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       // 检索设置
       enableReranker: true, // 固定为true，始终启用reranker
       rerankerModel: ruleForm.value.rerankerModel,
+      // 添加后端需要的reranker字段
+      rerankMethod: selectedReranker?.method || 'algorithm',
+      rerankName: selectedReranker?.name || ruleForm.value.rerankerModel,
       enableCompression: false, // 固定为false，不再提供UI配置
       enableDocumentCategory: false, // 固定为false，不再提供UI配置
       enableContextAssociation: true, // 固定为true，不再提供UI配置
