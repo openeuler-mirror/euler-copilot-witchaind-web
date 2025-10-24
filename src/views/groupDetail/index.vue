@@ -208,7 +208,7 @@
                                 <el-checkbox 
                                     v-if="row.type === 'role'"
                                     :model-value="isRowSelected(row)"
-                                    :disabled="!getRoleDeletable(row.roleNameId)"
+                                    :disabled="!getRoleDeletable(row.roleId)"
                                     @change="(val: any) => handleRowSelection(row, !!val)"
                                 />
                             </template>
@@ -219,9 +219,9 @@
                                 <div v-if="row.type === 'role'" class="role-name-container">
                                     <el-icon 
                                         class="expand-icon" 
-                                        @click="toggleRoleExpand(row.roleNameId!)"
+                                        @click="toggleRoleExpand(row.roleId!)"
                                     >
-                                        <CaretRight v-if="!isRoleExpanded(row.roleNameId!)" />
+                                        <CaretRight v-if="!isRoleExpanded(row.roleId!)" />
                                         <CaretBottom v-else />
                                     </el-icon>
                                     <span class="role-name">{{ row.roleName }}</span>
@@ -234,10 +234,10 @@
                                 <div v-if="row.type === 'permission'" class="permission-row">
                                     <el-checkbox 
                                         :model-value="row.groupAssigned"
-                                        :disabled="!getGroupEditable(row.roleNameId, row.actionType)"
-                                        @change="(val: any) => handleGroupPermissionChange(row.roleNameId, row.actionType, !!val)"
+                                        :disabled="!getGroupEditable(row.roleId, row.actionType)"
+                                        @change="(val: any) => handleGroupPermissionChange(row.roleId, row.actionType, !!val)"
                                         class="permission-group-checkbox"
-                                        :class="{ 'disabled-checkbox': !getGroupEditable(row.roleNameId, row.actionType) }"
+                                        :class="{ 'disabled-checkbox': !getGroupEditable(row.roleId, row.actionType) }"
                                     >
                                         {{ row.actionType }}
                                     </el-checkbox>
@@ -246,7 +246,7 @@
                                         :key="action.action"
                                         :model-value="action.isUsed"
                                         :disabled="!action.editable"
-                                        @change="(val: any) => handleItemPermissionChange(row.roleNameId, row.actionType, action.action, !!val)"
+                                        @change="(val: any) => handleItemPermissionChange(row.roleId, row.actionType, action.action, !!val)"
                                         class="permission-item-checkbox"
                                         :class="{ 'disabled-checkbox': !action.editable }"
                                     >
@@ -276,7 +276,7 @@
                                         type="text" 
                                         @click="handleDeleteRole(row)" 
                                         class="table-action-btn delete-btn"
-                                        :disabled="!getRoleDeletable(row.roleNameId)"
+                                        :disabled="!getRoleDeletable(row.roleId)"
                                     >
                                         {{ $t('groupDetail.deleteRole') }}
                                     </el-button>
@@ -1491,8 +1491,8 @@ const getRoleTableData = async () => {
                 });
             });
             
-            // 默认展开所有角色
-            expandedRoles.value = roleTableRoles.map(role => role.roleId);
+            // 默认收起所有角色，用户可以手动展开
+            expandedRoles.value = [];
         }
     } catch (error) {
         console.error('获取角色表格数据失败:', error);

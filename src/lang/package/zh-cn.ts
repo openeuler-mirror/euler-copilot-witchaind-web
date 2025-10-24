@@ -260,6 +260,7 @@ export default {
       languagePlace: '请选择语言',
       modelPlace: '请选择模型',
       analyticMethodPlace: '请选择解析方法',
+      uploadSizeLimitPlace: '请输入单个文件上传大小限制',
       pleasePlace: '请输入',
       pleaseChoose: '请选择',
       assetEditSuccess: '配置信息修改成功',
@@ -273,6 +274,7 @@ export default {
     analyticMethod: '文档解析器',
     fileChunkSize: '文件分块大小',
     uploadCountLimit: '单次文档上传个数上限',
+    uploadSizeLimit: '单个文件上传大小限制',
     character: '字符',
     configCategory: '文档类别',
     fileConfigCategory: '文档信息类别',
@@ -497,6 +499,8 @@ export default {
       '文档分块后，将分块转换为向量的向量化模型类型，先暂支持两种向量化模型bge-large-en（面向英文向量化场景）和bge-large-zh（面向中文向量化场景），默认情况下选择bge-large-zh模型。',
     fileChunkSizeTip:
       '配置文档上传后，将文件处理成片段分块的大小，分块大小范围为512-1024Token/块，默认使用1024Toke/块对文件进行分块。',
+    uploadSizeLimitTip:
+      '设置单个文件的上传大小限制，范围为128-2048MB，默认为512MB。超过此限制的文件将无法上传。',
   },
   pageTipText: {
     NoData: '暂无数据',

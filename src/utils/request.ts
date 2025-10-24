@@ -22,11 +22,16 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // 优先使用 ECSESSION，如果没有则使用 TOKEN_KEY
+    const ecsessionToken = localStorage.getItem('ECSESSION');
     const accessToken = localStorage.getItem(TOKEN_KEY);
-    if (accessToken) {
-      config.headers.Authorization = accessToken;
+    
+    if (ecsessionToken) {
+      config.headers['Authorization'] = `Bearer ${ecsessionToken}`;
+    } else if (accessToken) {
+      config.headers['Authorization'] = accessToken;
     }
-    config.headers['Authorization'] = `Bearer ${localStorage.getItem('ECSESSION')}`;
+    
     return config;
   },
   (error: any) => {

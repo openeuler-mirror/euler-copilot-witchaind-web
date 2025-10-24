@@ -15,7 +15,7 @@
                     <div class="group-tab-header">
                         <div>
                             <el-button 
-                                v-if="tab.name === 'mycreated'" 
+                                v-if="tab.name === 'mycreated' && groupList.length > 0" 
                                 type="primary" 
                                 class="group-btn"
                                 @click="handleCreateGroup(true)"
@@ -57,6 +57,15 @@
                             <div v-if="groupList.length === 0" class="group-card-empty empty_box">
                                 <div class="empty_img empty_pending"></div>
                                 <div class="empty_text">{{ $t('group.noData') }}</div>
+                                <el-button 
+                                    v-if="tab.name === 'mycreated'" 
+                                    type="primary" 
+                                    class="group-btn"
+                                    @click="handleCreateGroup(true)"
+                                    style="margin-top: 20px;"
+                                >
+                                    {{ $t('group.createTeam') }}
+                                </el-button>
                             </div>
                             <div v-else class="group-card-item" 
                                 v-for="item in groupList" 
@@ -119,6 +128,15 @@
                                     <div class="table-empty-box">
                                         <div class="table-empty-img"></div>
                                         <div>暂无数据</div>
+                                        <el-button 
+                                            v-if="tab.name === 'mycreated'" 
+                                            type="primary" 
+                                            class="group-btn"
+                                            @click="handleCreateGroup(true)"
+                                            style="margin-top: 20px;"
+                                        >
+                                            {{ $t('group.createTeam') }}
+                                        </el-button>
                                     </div>
                                 </template>
                                 <el-table-column prop="teamName" :label="$t('group.teamName')" width="200"

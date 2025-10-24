@@ -500,30 +500,6 @@
         :isCreate="isCreate"
         :formData="formData" />
     </el-dialog>
-    <el-dialog
-      align-center
-      v-model="addTipVisible"
-      class="tip-dialog"
-      width="400"
-      :title="$t('dialogTipText.tipsText')"
-    >
-      <p class="tip-message">
-        {{ $t('dialogTipText.isAddFilr') }}
-      </p>
-      <div class="tip-ops-btn">
-        <el-button
-          class="resetBtn"
-          type="primary"
-          @click="handleAddFile">
-          {{ $t('btnText.confirm') }}
-        </el-button>
-        <el-button
-          class="resetBtn cancelBtn"
-          @click="handleCancelAddFile">
-          {{ $t('btnText.cancel') }}
-        </el-button>
-      </div>
-    </el-dialog>
   <UploadProgress
     :showUploadNotify="uploadTaskListData.showUploadNotify"
     :uploadingList="uploadTaskListData.uploadingList"
@@ -591,7 +567,6 @@ const knoledgekeyWord = ref();
 const searchType = ref('kbName');
 const dialogImportVisible = ref(false);
 const dialogCreateVisible = ref(false);
-const addTipVisible = ref(false);
 const switchIcon = ref('thumb');
 const opsItem = ref();
 const klCardBox = ref();
@@ -1219,14 +1194,6 @@ const handleJumpAssets = async (kbItem: any) => {
   }
 };
 
-const handleAddFile = () => {
-  const assetLibraryObj = fileTableList.data[0];
-  handleJumpAssets(assetLibraryObj)
-};
-
-const handleCancelAddFile = () => {
-  addTipVisible.value = false;
-};
 
 const handleSelectionChange = (val:any) => {
   multipleSelection.value = val;
@@ -1355,8 +1322,24 @@ const handleOpsKbConfirm = () => {
 
 const handelResetForm = () => {
   dialogCreateVisible.value = false;
-  addTipVisible.value = true;
   formData.value = resetFormData.value;
+  
+  ElMessageBox.confirm(
+    t('dialogTipText.isAddFilr'),
+    t('dialogTipText.tipsText'),
+    {
+      confirmButtonText: t('btnText.confirm'),
+      cancelButtonText: t('btnText.cancel'),
+      confirmButtonClass: 'el-button--primary',
+      cancelButtonClass: 'el-button-confirm',
+      type: 'warning'
+    }
+  ).then(() => {
+    const assetLibraryObj = fileTableList.data[0];
+    handleJumpAssets(assetLibraryObj);
+  }).catch(() => {
+    // 用户取消操作，不需要做任何事情
+  });
 };
 
 const handleCloseCreateKb = () => {

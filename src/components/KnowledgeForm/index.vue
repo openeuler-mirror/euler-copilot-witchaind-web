@@ -129,6 +129,28 @@
               :max="100" />
             <span class="form-right-tip">（1~100）</span>
           </el-form-item>
+          
+          <el-form-item :label="$t('assetLibrary.uploadSizeLimit')" prop="uploadSizeLimit">
+            <template #label>
+              {{ $t('assetLibrary.uploadSizeLimit') }}
+              <el-tooltip
+                :content="$t('formTipText.uploadSizeLimitTip')"
+                placement="top"
+                popper-class="uploadSizeLimitTip"
+                effect="light">
+                <el-icon class="icon-help">
+                  <IconHelpCircle />
+                </el-icon>
+              </el-tooltip>
+            </template>
+            <el-input-number
+              class="config-size"
+              v-model="ruleForm.uploadSizeLimit"
+              controls-position="right"
+              :min="128"
+              :max="2048" />
+            <span class="form-right-tip">{{ locale === 'zh' ? '（128~2048MB）' : '（128~2048MB）' }}</span>
+          </el-form-item>
         </div>
         
         <!-- 向量化设置 -->
@@ -448,7 +470,7 @@ onMounted(async () => {
 const checkSectionCompletion = () => {
   const sectionFields = {
     basic: ['kbName'],
-    parse: ['defaultParseMethod', 'chunkMethod', 'defaultChunkSize', 'uploadCountLimit', 'embeddingModel'],
+    parse: ['defaultParseMethod', 'chunkMethod', 'defaultChunkSize', 'uploadCountLimit', 'uploadSizeLimit', 'embeddingModel'],
     retrieval: ['tokenizer']
   };
   
@@ -564,7 +586,13 @@ const rules = reactive<FormRules<RuleForm>>({
       trigger: ['blur', 'change'],
     },
   ],
-  uploadSizeLimit: [{ required: true }],
+  uploadSizeLimit: [
+    {
+      required: true,
+      message: t('assetLibrary.message.uploadSizeLimitPlace'),
+      trigger: ['blur', 'change'],
+    },
+  ],
 });
 
 const handleCopyTextToclipboard = (text: string) => {
@@ -869,7 +897,7 @@ const handleAddDocType = () => {
       font-size: 12px;
       color: var(--o-text-color-secondary);
       min-width: 120px;
-      max-width: 120px;
+      max-width: 140px;
       white-space: nowrap;
       flex-shrink: 0;
       line-height: 32px; // 与input高度对齐
