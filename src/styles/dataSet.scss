@@ -436,6 +436,7 @@
     flex-direction: column;
     .dataSetTableContainer{
       height: calc(100vh - 320px);
+      overflow-y: auto;
     }
     .el-table .cell{
       line-height: 16px !important;

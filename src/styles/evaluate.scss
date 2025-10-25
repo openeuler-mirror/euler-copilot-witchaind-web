@@ -41,6 +41,7 @@
     }
     .test-manage-table{
         height: calc(100vh - 320px);
+        overflow-y: auto;
     }
     .el-table.is-scrolling-left.el-table--border .el-table-fixed-column--left.is-last-column.el-table__cell {
         border-right: unset !important;

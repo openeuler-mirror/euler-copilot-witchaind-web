@@ -1,5 +1,5 @@
 <template>
-    <el-drawer v-model="props.visible" @close="handleClose" :show-close="props.rowData?.testingTask?.taskStatus !== 'success'" size="70%"
+    <el-drawer v-model="props.visible" @close="handleClose" :show-close="props.rowData?.testingTask?.taskStatus !== 'success'" size="80%"
         :destroy-on-close="false">
         <template #header>
             <h4 class="drawer-title">{{ props.rowData?.testingName }}</h4>

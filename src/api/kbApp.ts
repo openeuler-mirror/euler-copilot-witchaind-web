@@ -1,4 +1,5 @@
 import request from '@/utils/request';
+import uploadRequest, { createUploadRequest } from '@/utils/uploadRequest';
 import { CreateKbRequest, QueryKbRequest, UpdateKbRequest } from './apiType';
 import { ModelForm } from '@/components/UserHeaderBar/modelConfig';
 import qs from 'qs';
@@ -92,7 +93,11 @@ class KbAppAPI {
 
   /**导入资产库 */
   static importKbLibrary(payload: { data: any; params: any }, options: any) {
-    return request({
+    // 获取文件大小用于动态超时计算
+    const fileSize = payload.data.kb_packages?.size || 0;
+    const dynamicUploadRequest = createUploadRequest(fileSize, 1);
+    
+    return dynamicUploadRequest({
       url: `/kb/import`,
       method: 'post',
       data: payload.data,

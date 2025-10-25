@@ -15,7 +15,7 @@
                     <div class="group-tab-header">
                         <div>
                             <el-button 
-                                v-if="tab.name === 'mycreated'" 
+                                v-if="tab.name === 'mycreated' && groupList.length > 0" 
                                 type="primary" 
                                 class="group-btn"
                                 @click="handleCreateGroup(true)"
@@ -57,6 +57,15 @@
                             <div v-if="groupList.length === 0" class="group-card-empty empty_box">
                                 <div class="empty_img empty_pending"></div>
                                 <div class="empty_text">{{ $t('group.noData') }}</div>
+                                <el-button 
+                                    v-if="tab.name === 'mycreated'" 
+                                    type="primary" 
+                                    class="group-btn"
+                                    @click="handleCreateGroup(true)"
+                                    style="margin-top: 20px;"
+                                >
+                                    {{ $t('group.createTeam') }}
+                                </el-button>
                             </div>
                             <div v-else class="group-card-item" 
                                 v-for="item in groupList" 
@@ -119,6 +128,15 @@
                                     <div class="table-empty-box">
                                         <div class="table-empty-img"></div>
                                         <div>暂无数据</div>
+                                        <el-button 
+                                            v-if="tab.name === 'mycreated'" 
+                                            type="primary" 
+                                            class="group-btn"
+                                            @click="handleCreateGroup(true)"
+                                            style="margin-top: 20px;"
+                                        >
+                                            {{ $t('group.createTeam') }}
+                                        </el-button>
                                     </div>
                                 </template>
                                 <el-table-column prop="teamName" :label="$t('group.teamName')" width="200"
@@ -426,9 +444,37 @@ const handlequeryTeamList = async (param: { teamType: string, page: number, page
             groupList.value = allTeams.slice(start, end);
             totalCount.value = allTeams.length;
         } else {
-            // 原有逻辑
+            // 获取指定类型的团队列表
             const res = await GroupAPI.teamList(param) as any;
-            groupList.value = res.teams;
+            const teams = res.teams || [];
+            
+            // 根据teamType正确设置isJoined和isMyCreated字段
+            if (param.teamType === 'mycreated') {
+                // 我创建的团队：isMyCreated=true, isJoined=true
+                groupList.value = teams.map((team: any) => ({
+                    ...team,
+                    isJoined: true,
+                    isMyCreated: true,
+                    applying: false
+                }));
+            } else if (param.teamType === 'myjoined') {
+                // 我加入的团队：isJoined=true, isMyCreated=false（因为这里只包含我加入但未创建的团队）
+                groupList.value = teams.map((team: any) => ({
+                    ...team,
+                    isJoined: true,
+                    isMyCreated: false,
+                    applying: false
+                }));
+            } else {
+                // 其他类型（如public）：根据实际情况设置，默认未加入未创建
+                groupList.value = teams.map((team: any) => ({
+                    ...team,
+                    isJoined: team.isJoined || false,
+                    isMyCreated: team.isMyCreated || false,
+                    applying: false
+                }));
+            }
+            
             totalCount.value = res.total;
         }
     } catch (error) {

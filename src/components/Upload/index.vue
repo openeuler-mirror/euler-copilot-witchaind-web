@@ -3,6 +3,12 @@
     class="upload-to-list"
     :class="{ 'has-files': hasFiles }">
     <div v-if="hasFiles">
+      <!-- 超时管理提醒 -->
+      <UploadTimeoutManager
+        :file-size="allFileSizes"
+        :file-count="fileTableList.data.length"
+        :show-info="true" />
+      
       <el-alert
         :title="tipText"
         type="info"
@@ -153,12 +159,14 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import '@/styles/upload.scss';
-import { IconUpload, IconError, IconAlertCircle } from '@computing/opendesign-icons';
+import { IconUpload, IconError, IconAlertCircle, IconSuccess } from '@computing/opendesign-icons';
+import UploadTimeoutManager from './UploadTimeoutManager.vue';
 import type { UploadFile, UploadProgressEvent } from 'element-plus/es/components/upload/src/upload';
-const { t } = useI18n();
 import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { bytesToSize, isMaxMemoryOut } from '@/utils/bytesToSize';
 interface TableRow {
   id: string | number;
@@ -523,8 +531,82 @@ const uploadFiles = () => {
   });
 };
 
+// 并发控制的批量上传函数
+const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRetries = 2) => {
+  const results: any[] = [];
+  let index = 0;
+  
+  // 创建并发任务池
+  const runTask = async () => {
+    while (index < items.length) {
+      const currentIndex = index++;
+      const item = items[currentIndex];
+      
+      let retries = 0;
+      let success = false;
+      let lastError = null;
+      
+      while (retries <= maxRetries && !success) {
+        try {
+          await new Promise((resolve, reject) => {
+            doUpload({
+              file: item.file,
+              onProgress: (evt: any) => {
+                if (evt < 100) {
+                  item.percent = evt;
+                }
+              },
+              onError: (e: any) => {
+                item.uploadStatus = 'error';
+                reject(e);
+              },
+              onSuccess: () => {
+                item.uploadStatus = 'success';
+                item.percent = 100;
+                resolve(true);
+              },
+              fileInfo: item,
+            });
+          });
+          
+          success = true;
+          results.push({ success: true, item, index: currentIndex });
+          
+        } catch (error) {
+          lastError = error;
+          retries++;
+          
+          if (retries <= maxRetries) {
+            // 重试前等待递增的时间
+            await new Promise(resolve => setTimeout(resolve, retries * 1000));
+            item.percent = 0; // 重置进度
+          } else {
+            console.error(`文件上传失败: ${item.name}`, lastError);
+            item.uploadStatus = 'error';
+            results.push({ success: false, item, error: lastError, index: currentIndex });
+          }
+        }
+      }
+    }
+  };
+  
+  // 创建并发任务
+  const tasks = [];
+  for (let i = 0; i < Math.min(concurrency, items.length); i++) {
+    tasks.push(runTask());
+  }
+  
+  // 等待所有任务完成
+  await Promise.all(tasks);
+  
+  // 按原始顺序排序结果
+  results.sort((a, b) => a.index - b.index);
+  
+  return results;
+};
+
 // 资产库内提交文件 .pdf .ms .docx......
-const uploadKnowledgeFile = () => {
+const uploadKnowledgeFile = async () => {
   if (props.singleFileLimit) {
     if (handleLimitSize(fileTableList.data)) {
       ElMessage({
@@ -537,8 +619,9 @@ const uploadKnowledgeFile = () => {
       return;
     }
   }
+  
   props?.handleImportLoading(true);
-  let uploadFileNumber = 0;
+  
   uploadingList.value = fileTableList.data.map((item) => {
     return {
       id: item.id,
@@ -546,58 +629,61 @@ const uploadKnowledgeFile = () => {
       file: item.file,
       percent: 0,
       newUploadTask: true,
+      uploadStatus: 'pending',
     };
   });
-  const uploadPromises = uploadingList.value.map((item) => {
-    return new Promise((resolve, reject) => {
-      doUpload({
-        file: item.file,
-        onProgress: (evt: any) => {
-          if (evt < 100) {
-            item.percent = evt;
-          }
-        },
-        onError: (e: any) => {
-          uploadingList.value = uploadingList.value.map((up) => {
-            if (up.id === e.id) {
-              return { ...e, uploadStatus: 'error' };
-            }
-            return up;
-          });
-          props?.handleImportLoading(false);
-          handleToggleUploadNotify(); // 立即显示错误状态
-          reject(e); // 传递错误
-        },
-        onSuccess: () => {
-          uploadFileNumber += 1;
-          item.uploadStatus = 'success';
-          resolve(true); // 标记成功
-        },
-        fileInfo: item,
-      });
-    });
-  });
 
-  // 所有上传完成后统一更新列表
-  Promise.allSettled(uploadPromises).then((results) => {
-    const successCount = results.filter((result) => result.status === 'fulfilled').length;
+  handleToggleUploadNotify();
+
+  try {
+    // 使用并发控制上传，最多3个并发，最多重试2次
+    const results = await uploadWithConcurrencyControl(uploadingList.value, 3, 2);
+    
+    const successCount = results.filter(r => r.success).length;
     const errorCount = results.length - successCount;
+    const totalFiles = fileTableList.data.length;
 
-    // 统一更新列表
-    props?.handleImportLoading(false);
+    // 验证结果数量是否正确
+    if (results.length !== totalFiles) {
+      console.warn(`结果数量不匹配: 预期 ${totalFiles} 个，实际 ${results.length} 个`);
+    }
+
     if (errorCount > 0) {
-      handleToggleUploadNotify();
+      ElMessage({
+        showClose: true,
+        message: `批量上传完成：成功 ${successCount} 个，失败 ${errorCount} 个（共 ${totalFiles} 个文件）`,
+        icon: errorCount === results.length ? IconError : IconSuccess,
+        customClass: errorCount === results.length ? 'o-message--error' : 'o-message--warning',
+        duration: 5000,
+      });
+    } else {
+      ElMessage({
+        showClose: true,
+        message: `批量上传成功：共 ${successCount} 个文件全部上传完成！`,
+        icon: IconSuccess,
+        customClass: 'o-message--success',
+        duration: 3000,
+      });
     }
 
     // 所有上传完成后的回调
-    props.handleQueryTaskList(fileTableList.data); // 统一更新列表
-  });
-
-  uploadingList.value.length && handleToggleUploadNotify();
-  props.handleCancelVisible();
-  fileTableList.data = [];
-  uploadRef.value?.clearFiles();
-  allFileSizes.value = 0;
+    props.handleQueryTaskList(fileTableList.data);
+  } catch (error) {
+    console.error('批量上传过程中出现错误:', error);
+    ElMessage({
+      showClose: true,
+      message: '批量上传过程中出现错误',
+      icon: IconError,
+      customClass: 'o-message--error',
+      duration: 3000,
+    });
+  } finally {
+    props?.handleImportLoading(false);
+    props.handleCancelVisible();
+    fileTableList.data = [];
+    uploadRef.value?.clearFiles();
+    allFileSizes.value = 0;
+  }
 };
 
 // 提交数据集

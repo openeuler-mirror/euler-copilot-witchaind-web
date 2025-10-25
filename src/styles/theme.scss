@@ -21,6 +21,7 @@ body[theme='dark'] {
     --o-task-list-icon: var(--task-list-dark, url('@/assets/svg/dark_taskList.svg'));
     --o-task-score-icon: var(--task-score-dark, url('@/assets/svg/dark_taskScore.svg'));
     --o-task-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+    --o-bg-color-custom: #191b20;
 }
 
 body[theme='light'] {
@@ -45,4 +46,5 @@ body[theme='light'] {
     --o-task-list-icon: var(--task-list-light, url('@/assets/svg/light_taskList.svg'));
     --o-task-score-icon: var(--task-score-light, url('@/assets/svg/light_taskScore.svg'));
     --o-task-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+    --o-bg-color-custom: #ebeff6;
 }
