@@ -8,7 +8,7 @@
                     <!-- 第一行：操作按钮和搜索框 -->
                     <div class="member-permission-header">
                         <div class="header-left">
-                            <el-button type="primary" @click="handleInviteMember">
+                            <el-button type="primary" @click="handleInviteMember" :disabled="!hasRolePermission">
                                 {{ $t('groupDetail.inviteMember') }}
                             </el-button>
                             <el-button 
@@ -81,9 +81,9 @@
 
                             <el-table-column :label="$t('groupDetail.roleAuth')" min-width="150">
                                 <template #default="{ row }">
-                                    <!-- 编辑状态显示选择框 -->
+                                    <!-- 编辑状态显示选择框（仅在有权限且有角色选项时） -->
                                     <el-select 
-                                        v-if="editingMemberId === row.userId"
+                                        v-if="editingMemberId === row.userId && hasRolePermission && roleOptions.length > 0"
                                         v-model="row.roleId" 
                                         :placeholder="$t('groupDetail.pleaseSelectRole')"
                                         size="small"
@@ -96,15 +96,15 @@
                                             :value="option.value"
                                         />
                                     </el-select>
-                                    <!-- 普通状态显示角色名 -->
+                                    <!-- 普通状态或无权限时显示角色名 -->
                                     <span v-else>{{ row.roleName }}</span>
                                 </template>
                             </el-table-column>
 
                             <el-table-column :label="$t('groupDetail.operation')" width="120">
                                 <template #default="{ row }">
-                                    <!-- 编辑状态时显示保存和取消按钮 -->
-                                    <template v-if="editingMemberId === row.userId">
+                                    <!-- 编辑状态时显示保存和取消按钮（仅在有权限且有角色选项时） -->
+                                    <template v-if="editingMemberId === row.userId && hasRolePermission && roleOptions.length > 0">
                                         <el-button 
                                             type="text" 
                                             @click="handleSaveMember(row)"
@@ -126,7 +126,7 @@
                                             type="text" 
                                             @click="handleEditMember(row)"
                                             class="table-action-btn"
-                                            :disabled="!row.isEditable"
+                                            :disabled="!row.isEditable || !hasRolePermission"
                                         >
                                             {{ $t('groupDetail.editMember') }}
                                         </el-button>
@@ -208,7 +208,7 @@
                                 <el-checkbox 
                                     v-if="row.type === 'role'"
                                     :model-value="isRowSelected(row)"
-                                    :disabled="!getRoleDeletable(row.roleNameId)"
+                                    :disabled="!getRoleDeletable(row.roleId)"
                                     @change="(val: any) => handleRowSelection(row, !!val)"
                                 />
                             </template>
@@ -219,9 +219,9 @@
                                 <div v-if="row.type === 'role'" class="role-name-container">
                                     <el-icon 
                                         class="expand-icon" 
-                                        @click="toggleRoleExpand(row.roleNameId!)"
+                                        @click="toggleRoleExpand(row.roleId!)"
                                     >
-                                        <CaretRight v-if="!isRoleExpanded(row.roleNameId!)" />
+                                        <CaretRight v-if="!isRoleExpanded(row.roleId!)" />
                                         <CaretBottom v-else />
                                     </el-icon>
                                     <span class="role-name">{{ row.roleName }}</span>
@@ -234,10 +234,10 @@
                                 <div v-if="row.type === 'permission'" class="permission-row">
                                     <el-checkbox 
                                         :model-value="row.groupAssigned"
-                                        :disabled="!getGroupEditable(row.roleNameId, row.actionType)"
-                                        @change="(val: any) => handleGroupPermissionChange(row.roleNameId, row.actionType, !!val)"
+                                        :disabled="!getGroupEditable(row.roleId, row.actionType)"
+                                        @change="(val: any) => handleGroupPermissionChange(row.roleId, row.actionType, !!val)"
                                         class="permission-group-checkbox"
-                                        :class="{ 'disabled-checkbox': !getGroupEditable(row.roleNameId, row.actionType) }"
+                                        :class="{ 'disabled-checkbox': !getGroupEditable(row.roleId, row.actionType) }"
                                     >
                                         {{ row.actionType }}
                                     </el-checkbox>
@@ -246,7 +246,7 @@
                                         :key="action.action"
                                         :model-value="action.isUsed"
                                         :disabled="!action.editable"
-                                        @change="(val: any) => handleItemPermissionChange(row.roleNameId, row.actionType, action.action, !!val)"
+                                        @change="(val: any) => handleItemPermissionChange(row.roleId, row.actionType, action.action, !!val)"
                                         class="permission-item-checkbox"
                                         :class="{ 'disabled-checkbox': !action.editable }"
                                     >
@@ -276,7 +276,7 @@
                                         type="text" 
                                         @click="handleDeleteRole(row)" 
                                         class="table-action-btn delete-btn"
-                                        :disabled="!getRoleDeletable(row.roleNameId)"
+                                        :disabled="!getRoleDeletable(row.roleId)"
                                     >
                                         {{ $t('groupDetail.deleteRole') }}
                                     </el-button>
@@ -618,6 +618,9 @@ const originalMemberData = ref<Member | null>(null); // 保存原始数据用于
 // 角色选项数据，从接口获取
 const roleOptions = ref<{ value: string; label: string }[]>([]);
 
+// 角色权限状态跟踪
+const hasRolePermission = ref(true); // 默认有权限，当API调用失败时设为false
+
 // 成员分页相关数据
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -945,6 +948,12 @@ const handleItemPermissionChange = (roleId: string, actionType: string, actionNa
 
 // 成员管理方法
 const handleInviteMember = () => {
+    // 检查是否有角色权限
+    if (!hasRolePermission.value) {
+        ElMessage.warning('没有查询角色列表的权限，无法邀请成员');
+        return;
+    }
+    
     inviteMemberDialogVisible.value = true;
 };
 
@@ -1092,6 +1101,18 @@ const handleEditMember = (row: Member) => {
         return;
     }
     
+    // 检查是否有角色权限
+    if (!hasRolePermission.value) {
+        ElMessage.warning('无法查询到角色列表，无法编辑成员角色');
+        return;
+    }
+    
+    // 检查角色选项是否存在
+    if (roleOptions.value.length === 0) {
+        ElMessage.warning('无法查询到角色列表，无法编辑成员角色');
+        return;
+    }
+    
     // 进入编辑状态
     editingMemberId.value = row.userId;
     // 保存原始数据用于取消操作
@@ -1101,6 +1122,13 @@ const handleEditMember = (row: Member) => {
 // 保存成员角色修改
 const handleSaveMember = (row: Member) => {
     if (!originalMemberData.value) return;
+    
+    // 检查是否有角色权限
+    if (!hasRolePermission.value) {
+        ElMessage.warning('无法查询到角色列表，无法保存角色修改');
+        handleCancelEditMember();
+        return;
+    }
     
     // 检查角色是否有变化
     if (row.roleId === originalMemberData.value.roleId) {
@@ -1377,9 +1405,43 @@ const getRoleList = async () => {
                 value: role.roleId || role.role_id || role.id,
                 label: role.roleName || role.role_name || role.name
             }));
+            
+            // 成功获取角色列表，设置权限状态为true
+            hasRolePermission.value = true;
         }
     } catch (error) {
         console.error('获取角色列表失败:', error);
+        
+        // 检查是否是权限错误
+        const errorResponse = error as any;
+        const errorMessage = errorResponse?.response?.data?.message || errorResponse?.message || '';
+        const statusCode = errorResponse?.response?.status;
+        
+        // 检查权限错误：状态码为403/401，或者错误信息包含权限相关关键词
+        const isPermissionError = 
+            statusCode === 403 || 
+            statusCode === 401 || 
+            errorMessage.includes('权限') || 
+            errorMessage.includes('permission') ||
+            errorMessage.includes('unauthorized') ||
+            errorMessage.includes('forbidden');
+            
+        if (isPermissionError) {
+            console.warn('用户没有查询角色列表的权限');
+            console.log('权限错误详情:', { statusCode, errorMessage, hasRolePermission: hasRolePermission.value });
+            hasRolePermission.value = false;
+            
+            // 如果当前正在编辑成员，自动退出编辑状态
+            if (editingMemberId.value) {
+                console.log('自动退出编辑状态，当前编辑的成员ID:', editingMemberId.value);
+                handleCancelEditMember();
+            }
+        } else {
+            // 非权限错误，可能是网络问题等，不改变权限状态
+            console.warn('获取角色列表失败，但不是权限问题');
+        }
+        
+        // 清空角色选项
         roleOptions.value = [];
     }
 };
@@ -1429,8 +1491,8 @@ const getRoleTableData = async () => {
                 });
             });
             
-            // 默认展开所有角色
-            expandedRoles.value = roleTableRoles.map(role => role.roleId);
+            // 默认收起所有角色，用户可以手动展开
+            expandedRoles.value = [];
         }
     } catch (error) {
         console.error('获取角色表格数据失败:', error);
