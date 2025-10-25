@@ -97,29 +97,6 @@ http {
             return 404;
         }
 
-        # 文件上传接口 - 智能超时设置
-        location ~ ^/witchaind/api/(kb/import|doc)$ {
-            proxy_set_header X-Real-IP $remote_addr;
-            add_header X-Frame-Options DENY;
-            add_header Cache-Control "no-cache,no-store,must-revalidate";
-            proxy_buffering off;
-            error_page 404 = @not_found;
-            
-            # 智能上传超时设置
-            # 基于文件大小和网络条件的动态超时
-            proxy_connect_timeout 60s;    # 连接超时保持较短
-            proxy_send_timeout 1800s;     # 发送超时 - 匹配客户端
-            proxy_read_timeout 1800s;     # 读取超时 - 匹配客户端
-            
-            # 增加缓冲区大小以处理大文件
-            client_body_buffer_size 128k;
-            proxy_buffer_size 64k;
-            proxy_buffers 32 64k;
-            proxy_busy_buffers_size 128k;
-            
-            proxy_pass ${DATA_CHAIN_BACEND_URL};
-        }
-
         location /witchaind/api/ {
             proxy_set_header X-Real-IP $remote_addr;
             add_header X-Frame-Options DENY;
