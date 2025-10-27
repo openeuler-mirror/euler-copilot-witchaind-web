@@ -3,7 +3,7 @@
     <el-alert
       :title="timeoutInfoTitle"
       :description="timeoutInfoDesc"
-      :type="speedTestFailed ? 'warning' : 'info'"
+      :type="isTimeoutExceeded || speedTestFailed ? 'warning' : 'info'"
       :closable="false"
       show-icon>
       <template #default>
@@ -31,9 +31,19 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { calculateTimeout } from '@/utils/uploadRequest';
+import KfAppAPI from '@/api/kfApp';
+import _ from 'lodash';
+
+// 速度测试响应类型
+interface SpeedTestResponse {
+  success: boolean;
+  file_size: number;
+  processing_time_ms: number;
+  message: string;
+}
 
 const { t } = useI18n();
 
@@ -64,7 +74,7 @@ const createTestFile = (sizeInKB: number): File => {
 };
 
 // 测量网络上传速度
-const measureNetworkSpeed = async (): Promise<number> => {
+const measureNetworkSpeed = async () => {
   if (isSpeedTesting.value) return networkSpeed.value;
   
   isSpeedTesting.value = true;
@@ -72,39 +82,31 @@ const measureNetworkSpeed = async (): Promise<number> => {
   try {
     // 创建一个30KB的测试文件
     const testFile = createTestFile(30); // 30KB
-    const formData = new FormData();
-    formData.append('file', testFile);
     
+    // 记录开始时间（包含网络传输时间）
     const startTime = performance.now();
     
     // 调用后端速度测试接口
-    const response = await fetch('/api/doc/speed-test', {
-      method: 'POST',
-      body: formData,
-      // 不设置 Content-Type，让浏览器自动设置 multipart/form-data
-    });
-    
+    const result = await KfAppAPI.importSpeedTest({ file: testFile }) as unknown as SpeedTestResponse;
+    // 记录结束时间
     const endTime = performance.now();
     
-    if (!response.ok) {
-      throw new Error(`Speed test failed: ${response.status}`);
+    if (result && (result as any).success === true) {
+      // 使用后端返回的文件大小和前端测量的总时间计算速度
+      const fileSize = result.file_size; // 字节
+      const totalTimeSeconds = (endTime - startTime) / 1000; // 总时间（包含网络传输+后端处理）
+      
+      // 计算上传速度 (KB/s)
+      const speed = fileSize / totalTimeSeconds / 1024; // KB/s 
+      networkSpeed.value = Math.max(speed, 100); // 最小100KB/s
+    } else {
+      throw new Error();
     }
-    
-    const result = await response.json();
-    
-    // 计算上传速度
-    const duration = (endTime - startTime) / 1000; // 转换为秒
-    const fileSize = result.file_size || testFile.size; // 使用服务器返回的文件大小
-    const speed = fileSize / duration / 1024; // KB/s
-    
-    networkSpeed.value = Math.max(speed, 0);
-    return networkSpeed.value;
-  } catch (error) {
-    console.warn('Network speed measurement failed:', error);
+  } catch (_) {
+    console.warn('Network speed measurement failed');
     // 如果测量失败，使用默认值并标记失败状态
     networkSpeed.value = 1024; // 默认 1MB/s
     speedTestFailed.value = true;
-    return networkSpeed.value;
   } finally {
     isSpeedTesting.value = false;
   }
@@ -128,19 +130,41 @@ onMounted(() => {
 });
 
 // 监听showInfo变化，重新测量网速
-watch(() => props.showInfo, (newVal) => {
-  if (newVal && networkSpeed.value === 0) {
+watch(() => (props.fileCount), () => {
+  if (props.showInfo) {
     speedTestFailed.value = false; // 重置失败状态
     measureNetworkSpeed();
   }
+});
+
+// 组件销毁时重置数据
+onUnmounted(() => {
+  networkSpeed.value = 0;
 });
 
 const showTimeoutInfo = computed(() => {
   return props.showInfo && (props.fileSize > 50 * 1024 * 1024 || props.fileCount > 10);
 });
 
+// 检查是否超过超时限制
+const isTimeoutExceeded = computed(() => {
+  const speedInBytesPerSecond = networkSpeed.value > 0 
+    ? networkSpeed.value * 1024 // 转换为 bytes/s
+    : 1024 * 1024; // 默认 1MB/s
+  
+  const totalSize = props.fileSize;
+  
+  // 简单计算：总大小 / 网速
+  const estimatedSeconds = Math.ceil(totalSize / speedInBytesPerSecond);
+  const timeoutSeconds = calculateTimeout(props.fileSize, props.fileCount);
+  
+  return estimatedSeconds > timeoutSeconds;
+});
+
 const timeoutInfoTitle = computed(() => {
-  if (props.fileSize > 100 * 1024 * 1024) {
+  if (isTimeoutExceeded.value) {
+    return t('uploadTimeout.timeoutWarning');
+  } else if (props.fileSize > 100 * 1024 * 1024) {
     return t('uploadTimeout.largeFileUploadReminder');
   } else if (props.fileCount > 20) {
     return t('uploadTimeout.batchUploadReminder');
@@ -149,7 +173,9 @@ const timeoutInfoTitle = computed(() => {
 });
 
 const timeoutInfoDesc = computed(() => {
-  if (speedTestFailed.value) {
+  if (isTimeoutExceeded.value) {
+    return t('uploadTimeout.timeoutExceededDescription');
+  } else if (speedTestFailed.value) {
     return t('uploadTimeout.speedTestFailed');
   }
   return t('uploadTimeout.timeoutDescription');
@@ -161,7 +187,11 @@ const estimatedTime = computed(() => {
     ? networkSpeed.value * 1024 // 转换为 bytes/s
     : 1024 * 1024; // 默认 1MB/s
   
-  const totalSize = props.fileSize * props.fileCount;
+  // 计算总大小
+  const totalSize = props.fileSize;
+  
+  // 简单计算：总大小 / 网速
+  // 单通道测速得到的速度就是实际可用的网络速度，多并发会共享这个带宽
   const seconds = Math.ceil(totalSize / speedInBytesPerSecond);
   
   if (seconds < 60) {
@@ -177,7 +207,7 @@ const estimatedTime = computed(() => {
 
 const timeoutLimit = computed(() => {
   const timeout = calculateTimeout(props.fileSize, props.fileCount);
-  const minutes = Math.ceil(timeout / (60 * 1000));
+  const minutes = Math.ceil(timeout / 60);
   return t('uploadTimeout.minutes', { minutes });
 });
 

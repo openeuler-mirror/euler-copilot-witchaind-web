@@ -22,18 +22,18 @@ const getAuthHeader = (): string | null => {
 // 动态计算超时时间的函数
 const calculateTimeout = (fileSize: number, fileCount: number = 1): number => {
   // 基础超时时间：2分钟
-  const baseTimeout = 2 * 60 * 1000;
+  const baseTimeout = 2 * 60;
   
   // 根据文件大小计算额外时间（假设最慢网速 100KB/s）
-  const sizeBasedTimeout = (fileSize / (100 * 1024)) * 1000;
+  const sizeBasedTimeout = (fileSize / (100 * 1024));
   
   // 批量上传的额外时间
-  const batchTimeout = fileCount > 1 ? fileCount * 30 * 1000 : 0;
+  const batchTimeout = fileCount > 1 ? fileCount * 30: 0;
   
   // 最小5分钟，最大30分钟
   const calculatedTimeout = Math.min(
-    Math.max(baseTimeout + sizeBasedTimeout + batchTimeout, 5 * 60 * 1000),
-    30 * 60 * 1000
+    Math.max(baseTimeout + sizeBasedTimeout + batchTimeout, 5 * 60),
+    30 * 60
   );
   
   return calculatedTimeout;

@@ -130,6 +130,18 @@ class KfAppAPI {
       params: data,
     });
   }
+
+  /* 测试上传速度 */
+  static importSpeedTest( data: { file: File } ) {
+    return request({
+      url: `/doc/speed-test`,
+      method: 'post',
+      data: data,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
 }
 
 export default KfAppAPI;
