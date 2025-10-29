@@ -468,8 +468,14 @@ const uploadFiles = () => {
       return;
     }
   }
-  props?.handleImportLoading(true);
+  
+  // 立即关闭dialog
+  props.handleCancelVisible();
+  
   let uploadFileNumber = 0;
+  let errorFileNumber = 0;
+  const totalFiles = fileTableList.data.length;
+  
   props.handInitTaskList(fileTableList.data).then((res: any) => {
     uploadingList.value = fileTableList.data.map((item) => {
       return {
@@ -480,6 +486,7 @@ const uploadFiles = () => {
         newUploadTask: true,
       };
     });
+    
     uploadingList.value.forEach((item) => {
       return doUpload({
         file: item.file,
@@ -489,19 +496,20 @@ const uploadFiles = () => {
           }
         },
         onError: (e: any) => {
-          uploadFileNumber += 1;
+          errorFileNumber += 1;
           uploadingList.value = uploadingList.value.map((up) => {
             if (up.id === e.id) {
               return { ...e, uploadStatus: 'error'};
             }
             return up;
           });
-          props?.handleImportLoading(false);
           handleToggleUploadNotify();
         },
         onSuccess: () => {
           uploadFileNumber += 1;
-          if (uploadFileNumber === fileTableList.data.length) {
+          
+          // 检查是否所有文件都已处理完成
+          if (uploadFileNumber + errorFileNumber === totalFiles) {
             props.handleQueryTaskList();
             fileTableList.data = [];
           }
@@ -509,6 +517,7 @@ const uploadFiles = () => {
         fileInfo: item
       });
     });
+    
     uploadingList.value = [
       ...uploadingList.value,
       ...res?.map((item: any) => {
@@ -524,7 +533,6 @@ const uploadFiles = () => {
         };
       }),
     ];
-    props.handleCancelVisible();
     uploadRef.value?.clearFiles();
     allFileSizes.value = 0;
     uploadingList.value.length && handleToggleUploadNotify();
@@ -620,7 +628,8 @@ const uploadKnowledgeFile = async () => {
     }
   }
   
-  props?.handleImportLoading(true);
+  // 立即关闭dialog
+  props.handleCancelVisible();
   
   uploadingList.value = fileTableList.data.map((item) => {
     return {
@@ -678,8 +687,6 @@ const uploadKnowledgeFile = async () => {
       duration: 3000,
     });
   } finally {
-    props?.handleImportLoading(false);
-    props.handleCancelVisible();
     fileTableList.data = [];
     uploadRef.value?.clearFiles();
     allFileSizes.value = 0;
@@ -688,7 +695,13 @@ const uploadKnowledgeFile = async () => {
 
 // 提交数据集
 const uploadDatasetFile = () => {
+  // 立即关闭dialog
+  props.handleCancelVisible();
+  
   let uploadFileNumber = 0;
+  let errorFileNumber = 0;
+  const totalFiles = fileTableList.data.length;
+  
   props.handInitTaskList(fileTableList.data).then((res: any) => {
     uploadingList.value = fileTableList.data.map((item) => {
       return {
@@ -699,6 +712,7 @@ const uploadDatasetFile = () => {
         newUploadTask: true,
       };
     });
+    
     uploadingList.value.forEach((item) => {
       return doUpload({
         file: item.file,
@@ -708,7 +722,7 @@ const uploadDatasetFile = () => {
           }
         },
         onError: (e: any) => {
-          uploadFileNumber += 1;
+          errorFileNumber += 1;
           uploadingList.value = uploadingList.value.map((up) => {
             if (up.id === e.id) {
               return { ...e, uploadStatus: 'error'};
@@ -719,7 +733,9 @@ const uploadDatasetFile = () => {
         },
         onSuccess: () => {
           uploadFileNumber += 1;
-          if (uploadFileNumber === fileTableList.data.length) {
+          
+          // 检查是否所有文件都已处理完成
+          if (uploadFileNumber + errorFileNumber === totalFiles) {
             props.handleQueryTaskList();
             fileTableList.data = [];
           }
@@ -727,6 +743,7 @@ const uploadDatasetFile = () => {
         fileInfo: item
       });
     });
+    
     uploadingList.value = [
       ...uploadingList.value,
       ...res?.map((item: any) => {
@@ -742,7 +759,6 @@ const uploadDatasetFile = () => {
         };
       }),
     ];
-    props.handleCancelVisible();
     uploadRef.value?.clearFiles();
     allFileSizes.value = 0;
     uploadingList.value.length && handleToggleUploadNotify();

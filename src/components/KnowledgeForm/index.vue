@@ -897,7 +897,7 @@ const handleAddDocType = () => {
       font-size: 12px;
       color: var(--o-text-color-secondary);
       min-width: 120px;
-      max-width: 140px;
+      max-width: 160px;
       white-space: nowrap;
       flex-shrink: 0;
       line-height: 32px; // 与input高度对齐
