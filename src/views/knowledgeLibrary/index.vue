@@ -560,8 +560,7 @@ groupName: {
   type: String
 },
 });
-const { navGroup } =  storeToRefs(useGroupStore());
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { getImageUrl } = useAssets();
 const knoledgekeyWord = ref();
 const searchType = ref('kbName');
@@ -574,6 +573,7 @@ const loading = ref(false);
 const importTaskList = ref([]);
 const userLanguage = ref();
 const isCreate = ref(true);
+const currentEditingKb = ref<any>(null); // 保存当前正在编辑的资产库
 
 const resetFormData = ref({
   kbName: '',
@@ -1165,6 +1165,18 @@ watch(
 const handleCreateKnowledge = () => {
   dialogCreateVisible.value = true;
   isCreate.value = true;
+  currentEditingKb.value = null; // 创建新资产库时清空
+  
+  // 根据当前语言设置默认分词器
+  // API返回的tokenizer值为：["中文", "en"]
+  // 使用i18n的locale来判断当前语言
+  const currentLocale = locale.value;
+  const isChineseLanguage = currentLocale?.includes('zh') || currentLocale === 'zh-cn' || currentLocale === '中文';
+  
+  formData.value = {
+    ...resetFormData.value,
+    tokenizer: isChineseLanguage ? '中文' : 'en'
+  };
   
   // 确保样式生效
   nextTick(() => {
@@ -1183,15 +1195,17 @@ const handleCancelVisible = () => {
 };
 
 const handleJumpAssets = async (kbItem: any) => {
-  await router.push({path:'/libraryInfo',query:{kb_id:kbItem.kbId}},);
-  let groupNav = navGroup.value;
-  groupNav[2]={
-    name:kbItem.kbName,
-    path:'/libraryInfo',
-    query:{
-      kb_id:kbItem.kbId
-    }
-  }
+  // 传递完整的面包屑信息到 URL
+  const targetQuery = {
+    team_id: route.query.team_id || route.query.id,  // 兼容旧参数
+    team_name: route.query.team_name || route.query.name,  // 兼容旧参数
+    kb_id: kbItem.kbId,
+    kb_name: kbItem.kbName
+  };
+  await router.push({
+    path: '/libraryInfo',
+    query: targetQuery
+  });
 };
 
 
@@ -1201,6 +1215,7 @@ const handleSelectionChange = (val:any) => {
 
 const handleEditKl = (row: any) => {
   formData.value = row;
+  currentEditingKb.value = row; // 保存当前编辑的资产库
   dialogCreateVisible.value = true;
   isCreate.value = false;
   
@@ -1335,7 +1350,8 @@ const handelResetForm = () => {
       type: 'warning'
     }
   ).then(() => {
-    const assetLibraryObj = fileTableList.data[0];
+    // 使用保存的编辑资产库对象，而不是列表的第一个
+    const assetLibraryObj = currentEditingKb.value || fileTableList.data[0];
     handleJumpAssets(assetLibraryObj);
   }).catch(() => {
     // 用户取消操作，不需要做任何事情

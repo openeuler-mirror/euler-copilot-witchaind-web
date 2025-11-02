@@ -5,7 +5,7 @@
       <div v-show="groupMenu === 'knowledge'">
         <div class="document-info-title">
           <div class="document-info-title-left">
-            {{ navGroup[3]?.name }}
+            {{ route.query.file_name }}
           </div>
         </div>
         <el-tabs v-model="activeName" class="document-info-tabs" @tab-click="handleTabClick">
@@ -22,13 +22,16 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
 import { useGroupStore } from "@/store/modules/group";
 import knowledgeFileSection from "@/views/knowledgeFileSection/index.vue"
 import GroupLayout from "@/components/GroupLayout/index.vue"
 import documentLog from "@/views/knowledgeFile/documentLog.vue"
 import { storeToRefs } from "pinia";
 import "@/styles/libraryInfo.scss"
-const { navGroup, groupMenu } = storeToRefs(useGroupStore());
+
+const route = useRoute();
+const { groupMenu } = storeToRefs(useGroupStore());
 
 let activeName = ref('documentInfo')
 const handleTabClick = (tab: any, event: any) => { }

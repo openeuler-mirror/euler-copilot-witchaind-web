@@ -264,6 +264,7 @@ import { v4 as uuidv4 } from 'uuid';
 import KbAppAPI from '@/api/kbApp';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { matchEmbeddingModelOption, matchRerankerModelOption, getUserPreferences } from '@/utils/userPreferences';
 
 const route = useRoute()
 const { t, locale} = useI18n();
@@ -406,6 +407,7 @@ const props = defineProps({
 
 onMounted(async () => {
   loading.visible.value = false;
+  
   ruleForm.value = props.formData
     ? JSON.parse(
         JSON.stringify({
@@ -418,6 +420,8 @@ onMounted(async () => {
           uploadCountLimit: props.formData?.uploadCountLimit || 128,
           chunkMethod: props.formData?.chunkMethod || 'semantic',
           chunkIdentifier: props.formData?.chunkIdentifier || '\\n\\n',
+          // 保留父组件传递的tokenizer值
+          tokenizer: props.formData?.tokenizer || '',
           // 处理reranker字段映射：优先使用rerankerModel，如果没有则从rerankName获取
           rerankerModel: props.formData?.rerankerModel || props.formData?.rerankName || '',
         } as RuleForm)
@@ -454,14 +458,31 @@ onMounted(async () => {
   // 如果是创建状态，设置默认值
   if (props.isCreate) {
     ruleForm.value.kbName = t('defaultText.kbName');
-    ruleForm.value.tokenizer = locale.value==='zh-cn'?languageOptions.value?.[0].value : languageOptions.value?.[1].value
     
-    ruleForm.value.embeddingModel = emBeddingModelOptions.value?.[0].value || '';
+    // 根据当前i18n locale来决定默认分词器
+    // API返回的tokenizer值为：["中文", "en"]
+    const isChineseLanguage = locale.value?.includes('zh') || locale.value === 'zh-cn' || locale.value === '中文';
+    
+    // 根据用户语言选择对应的分词器：中文选"中文"，其他选"en"
+    ruleForm.value.tokenizer = isChineseLanguage ? '中文' : 'en';
+    
+    // 根据用户偏好设置embedding模型默认值
+    const userPreferences = getUserPreferences();
+    const preferredEmbedding = matchEmbeddingModelOption(emBeddingModelOptions.value, userPreferences.embeddingModelPreference);
+    ruleForm.value.embeddingModel = preferredEmbedding?.value || emBeddingModelOptions.value?.[0].value || '';
+    
     ruleForm.value.defaultParseMethod = parserMethodOptions.value?.[0].value || '';
-    // 默认选择jaccard dis reranker
+    
+    // 根据用户偏好设置reranker模型默认值
     if (!ruleForm.value.rerankerModel) {
-      const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
-      ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
+      const preferredReranker = matchRerankerModelOption(rerankerOptions.value, userPreferences.rerankerPreference);
+      if (preferredReranker) {
+        ruleForm.value.rerankerModel = preferredReranker.value;
+      } else {
+        // 如果没有偏好设置，默认选择jaccard dis reranker
+        const defaultReranker = rerankerOptions.value?.find(item => item.name === 'jaccard dis reranker');
+        ruleForm.value.rerankerModel = defaultReranker?.value || rerankerOptions.value?.[0]?.value || '';
+      }
     }
   }
 });

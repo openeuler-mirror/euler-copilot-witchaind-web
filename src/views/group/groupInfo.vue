@@ -15,5 +15,5 @@ import GroupLayout from '@/components/GroupLayout/index.vue';
 import knowledgeLibrary from "@/views/knowledgeLibrary/index.vue";
 
 const route = useRoute();
-const groupName = route.query.name as string;
+const groupName = route.query.team_name as string;
 </script>
