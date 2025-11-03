@@ -298,8 +298,6 @@ const handleSizeChange = (pageSize: number) => {
     handlequeryTeamList(param);
 };
 
-const { navGroup } = storeToRefs(useGroupStore());
-
 const groupTabs = ref([
     {
         label: t('group.allTeams'),
@@ -369,16 +367,14 @@ const handleToGroup = async (row: any) => {
     }
     
     localStorage.setItem('teamId', row.teamId);
-    await router.push({ path: `/groupInfo`, query: { name: row.teamName, id: row.teamId } });
-    let groupNav = navGroup.value;
-    groupNav[1] = {
-        name: row.teamName,
-        path: '/groupInfo',
+    // 传递团队信息到 URL
+    await router.push({
+        path: `/groupInfo`,
         query: {
-            name: row.teamName,
-            id: row.teamId
+            team_id: row.teamId,
+            team_name: row.teamName
         }
-    }
+    });
     setCurTeamInfo(row);
 }
 

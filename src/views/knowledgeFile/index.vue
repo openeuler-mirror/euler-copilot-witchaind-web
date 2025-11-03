@@ -1002,25 +1002,21 @@ const hanldeSearhNameFilter = (filterName: string) => {
   searchPayload.value.docName = filterName;
   handleSearchData();
 };
-const groupStore = useGroupStore();
-const { navGroup } = storeToRefs(groupStore);
+
 const handleJumpFileSection = async (row: any) => {
+  // 传递完整的面包屑信息到 URL
+  const targetQuery = {
+    team_id: route.query.team_id,
+    team_name: route.query.team_name,
+    kb_id: route.query.kb_id,
+    kb_name: route.query.kb_name,
+    file_id: row.docId,
+    file_name: row.docName
+  };
   await router.push({
     path: '/documentInfo',
-    query: {
-      kb_id: route.query.kb_id,
-      file_id: row.docId,
-    },
+    query: targetQuery,
   });
-  let groupNav = navGroup.value;
-  groupNav[3] = {
-    name: row.docName,
-    path: '/documentInfo',
-    query: {
-      kb_id: route.query.kb_id,
-      file_id:row.docId,
-    },
-  };
 };
 
 const handleSearchData = () => {

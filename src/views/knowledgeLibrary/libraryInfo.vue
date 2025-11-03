@@ -3,7 +3,7 @@
     <!-- 知识库内容 -->
     <template v-slot:default>
       <div v-show="groupMenu === 'knowledge'">
-        <div class="library-info-title">{{ navGroup[2]?.name }}</div>
+        <div class="library-info-title">{{ route.query.kb_name }}</div>
         <el-tabs
           v-model="knowledgeTabActive"
           class="library-info-tabs"
@@ -30,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
 import { useGroupStore } from '@/store/modules/group';
 import knowledgeFile from '@/views/knowledgeFile/index.vue';
 import DataSet from '@/views/dataSet/index.vue';
@@ -37,8 +38,9 @@ import Evaluate from '@/views/evaluate/index.vue';
 import { storeToRefs } from 'pinia';
 import '@/styles/libraryInfo.scss';
 
+const route = useRoute();
 const store = useGroupStore();
-const { navGroup, groupMenu, knowledgeTabActive } = storeToRefs(store);
+const { groupMenu, knowledgeTabActive } = storeToRefs(store);
 const { handleKnowledgeTab } = store;
 
 const handleTabClick = (tab: any) => {
