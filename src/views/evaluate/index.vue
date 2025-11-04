@@ -88,10 +88,10 @@
           </el-tooltip> 
         </template>
       </el-table-column>
-      <el-table-column prop="modelType" width="150" :label="$t('testing.type')">
+      <el-table-column prop="modelType" width="150" label="评测模型">
         <template #header>
           <div class="custom-header">
-            <span>{{ $t('testing.type') }}</span>
+            <span>评测模型</span>
             <el-icon ref="modelRef" @click.stop :class="modelFilterVisible || searchPayload?.llmId?.length! > 0
               ? 'searchIconIsActive'
               : ''
@@ -108,7 +108,7 @@
         <template #default="scope">
           <el-tooltip :content="scope.row.llm?.llmName" placement="top" >
             <span v-if="scope.row.llm" class="testing-model-type table-row-content">
-              <img :src="`data:image/svg+xml;base64,${scope.row.llm?.llmIcon}`"/>
+              <img :src="scope.row.llm?.llmIcon"/>
               {{ scope.row.llm?.llmName}}
             </span>
           </el-tooltip> 
@@ -135,6 +135,17 @@
           <span v-if="scope.row.llm">
             {{ scope.row.searchMethod}}
           </span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="searchLlm" width="150" label="检索模型">
+        <template #default="scope">
+          <el-tooltip v-if="scope.row.searchLlm && ['enhanced_by_llm', 'query_extend'].includes(scope.row.searchMethod)" :content="scope.row.searchLlm?.llmName" placement="top" >
+            <span class="testing-model-type table-row-content">
+              <img v-if="scope.row.searchLlm?.llmIcon" :src="scope.row.searchLlm?.llmIcon"/>
+              {{ scope.row.searchLlm?.llmName}}
+            </span>
+          </el-tooltip>
+          <span v-else>--</span>
         </template>
       </el-table-column>
       <el-table-column prop="topk" width="80" label="Top_k"></el-table-column>
@@ -293,6 +304,7 @@ const searchPayload = ref<{
   topK?:string,
   authorName?: string,
   searchMethod?: string,
+  [key: string]: any,
 }>({});
 const llmOptions = ref<Array<{
     label: string,

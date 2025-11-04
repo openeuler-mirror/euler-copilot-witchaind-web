@@ -710,6 +710,8 @@ const uploadTaskListData = ref<{
 const parserMethodOptions = ref<any>([]);
 const userLanguage = ref();
 const isSubmitDisabled = ref(true);
+// 记录正在上传的文件（用于防止重复上传）
+const uploadingFiles = new Map<string, boolean>();
 const isGenerateDataSet = computed(()=>{
   const arr = selectionFileData.value.filter((item:any) => {
     return item.docTask?.taskStatus === 'success';
@@ -1404,10 +1406,29 @@ const toggleUploadNotify = (uploadTaskPayload: any) => {
 };
 
 const handleUploadMyFile = (options: any) => {
+  // 优化文件唯一标识生成逻辑
+  // 1. 优先使用 fileInfo.id（来自 Upload 组件的唯一 uid）
+  // 2. 如果没有 id，使用文件名+大小组合（不使用 lastModified，避免时间戳不一致）
+  const fileId = options.fileInfo?.id;
+  const fileName = options.file.raw?.name || options.file?.name;
+  const fileSize = options.file.raw?.size || options.file?.size;
+  const fileKey = fileId ? `id_${fileId}` : `${fileName}_${fileSize}`;
+  
+  // 检查是否正在上传
+  if (uploadingFiles.has(fileKey)) {
+    console.warn(`文件 ${fileName} 正在上传中，跳过重复请求`);
+    options.onError({ ...options.fileInfo, error: '文件正在上传中，请勿重复提交' });
+    return;
+  }
+  
+  // 标记为正在上传
+  uploadingFiles.set(fileKey, true);
+  console.log(`开始上传文件: ${fileName}, fileKey: ${fileKey}`);
+  
   KfAppAPI.importKbLibraryFile(
     {
       data: {
-        docs: options.file.raw,
+        docs: options.file.raw || options.file,
       },
       params: {
         kbId: route.query.kb_id,
@@ -1416,10 +1437,17 @@ const handleUploadMyFile = (options: any) => {
     options
   )
     .then(() => {
+      console.log(`文件上传成功: ${fileName}, fileKey: ${fileKey}`);
       options.onSuccess({ ...options.fileInfo, success: 'success' });
     })
     .catch((err) => {
+      console.error(`文件上传失败: ${fileName}, fileKey: ${fileKey}`, err);
       options.onError({ ...options.fileInfo, error: err });
+    })
+    .finally(() => {
+      // 上传完成后移除标记
+      console.log(`清理上传标记: ${fileName}, fileKey: ${fileKey}`);
+      uploadingFiles.delete(fileKey);
     });
 };
 

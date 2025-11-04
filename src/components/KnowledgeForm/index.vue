@@ -183,7 +183,14 @@
                 v-for="item in emBeddingModelOptions"
                 :key="item.value"
                 :label="item.label"
-                :value="item.value" />
+                :value="item.value">
+                <div class="model-option">
+                  <div class="model-icon" v-if="item.icon">
+                    <img :src="item.icon" :alt="item.label" class="model-icon-img" />
+                  </div>
+                  <span>{{ item.label }}</span>
+                </div>
+              </el-option>
             </el-select>
           </el-form-item>
         </div>
@@ -219,7 +226,14 @@
               v-for="item in rerankerOptions"
               :key="item.value"
               :label="item.label"
-              :value="item.value" />
+              :value="item.value">
+              <div class="model-option">
+                <div class="model-icon" v-if="item.icon">
+                  <img :src="item.icon" :alt="item.label" class="model-icon-img" />
+                </div>
+                <span>{{ item.label }}</span>
+              </div>
+            </el-option>
           </el-select>
         </el-form-item>
         
@@ -330,10 +344,12 @@ const ruleForm = ref<RuleForm>({
 });
 
 const languageOptions = ref<Array<{label: string, value: string}>>([]);
-const emBeddingModelOptions = ref<Array<{label: string, value: string}>>([]);
+const emBeddingModelOptions = ref<Array<{label: string, value: string, icon?: string, id?: string, rawData?: any}>>([]);
 const parserMethodOptions = ref<Array<{label: string, value: string}>>([]);
-const rerankerOptions = ref<Array<{label: string, value: string, method: string, name: string}>>([]);
+const rerankerOptions = ref<Array<{label: string, value: string, method: string, name: string, icon?: string, id?: string, rawData?: any}>>([]);
 const languageApiData = ref<any[]>([]); // 存储API返回的原始数据
+const embeddingRawData = ref<any[]>([]); // 存储Embedding模型的原始完整数据
+const rerankerRawData = ref<any[]>([]); // 存储Reranker模型的原始完整数据
 
 // 生成分词器选项的函数
 const generateLanguageOptions = () => {
@@ -368,11 +384,17 @@ const updateRerankerOptions = (rerankerRes: any) => {
     rerankerData = rerankerRes.data;
   }
   
+  // 保存原始数据
+  rerankerRawData.value = rerankerData;
+  
   rerankerOptions.value = rerankerData?.map((item: any) => ({
-    label: `[${item.rerankMethod}] ${item.rerankerName}`,
-    value: item.rerankerName,
-    method: item.rerankMethod,
-    name: item.rerankerName
+    label: item.rerankName || item.rerankerName,
+    value: item.rerankName || item.rerankerName,
+    method: item.rerankProvider || item.rerankMethod,
+    name: item.rerankName || item.rerankerName,
+    icon: item.rerankIcon,
+    id: item.rerankId,
+    rawData: item // 存储完整的原始数据
   })) || [];
 };
 
@@ -441,10 +463,28 @@ onMounted(async () => {
   generateLanguageOptions();
   
   // 处理嵌入模型选项
-  emBeddingModelOptions.value = (embeddingRes as unknown as [])?.map((item: any) => ({
-    label: item,
-    value: item,
-  }));
+  const embeddingData = (embeddingRes as unknown as any)?.result || (embeddingRes as unknown as []);
+  
+  // 保存原始数据
+  embeddingRawData.value = Array.isArray(embeddingData) ? embeddingData : [];
+  
+  emBeddingModelOptions.value = Array.isArray(embeddingData) ? embeddingData.map((item: any) => {
+    // 如果item是对象（新格式），提取字段
+    if (typeof item === 'object' && item.embeddingName) {
+      return {
+        label: item.embeddingName,
+        value: item.embeddingName,
+        icon: item.embeddingIcon,
+        id: item.embeddingId,
+        rawData: item // 存储完整的原始数据
+      };
+    }
+    // 如果item是字符串（旧格式），直接使用
+    return {
+      label: item,
+      value: item,
+    };
+  }) : [];
 
   // 处理解析方法选项
   parserMethodOptions.value = (parseMethodRes as unknown as [])?.map((item: any) => ({
@@ -641,11 +681,22 @@ onMounted(() => {
     }
   });
 });
+
 const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   await formEl.validate((valid) => {
-    // 根据选中的rerankerModel找到对应的method和name
+    // 根据选中的embeddingModel找到对应的原始数据以获取 embedding_id
+    const selectedEmbedding = emBeddingModelOptions.value.find(item => item.value === ruleForm.value.embeddingModel);
+    const embeddingId = selectedEmbedding?.rawData?.embeddingId || null;
+    const embeddingName = selectedEmbedding?.rawData?.embeddingName || ruleForm.value.embeddingModel;
+    console.log('[KnowledgeForm] Selected embeddingId:', embeddingId, 'embeddingName:', embeddingName);
+    
+    // 根据选中的rerankerModel找到对应的原始数据以获取 rerank_id
     const selectedReranker = rerankerOptions.value.find(item => item.value === ruleForm.value.rerankerModel);
+    const rerankId = selectedReranker?.rawData?.rerankId || null;
+    const rerankName = selectedReranker?.name || ruleForm.value.rerankerModel;
+    const rerankMethod = selectedReranker?.method || 'algorithm';
+    console.log('[KnowledgeForm] Selected rerankId:', rerankId, 'rerankName:', rerankName, 'rerankMethod:', rerankMethod);
     
     let payload = {
       // 基本设置
@@ -658,14 +709,16 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       defaultChunkSize: ruleForm.value.defaultChunkSize,
       uploadCountLimit: ruleForm.value.uploadCountLimit,
       // 向量化设置
-      embeddingModel: ruleForm.value.embeddingModel,
+      embeddingModel: ruleForm.value.embeddingModel, // 用于展示的embedding模型名称
+      embedding_id: embeddingId, // 后端需要的embedding ID
+      embeddingName: embeddingName, // embedding名称
       tokenizer: ruleForm.value?.tokenizer?.toLocaleLowerCase(),
       // 检索设置
       enableReranker: true, // 固定为true，始终启用reranker
-      rerankerModel: ruleForm.value.rerankerModel,
-      // 添加后端需要的reranker字段
-      rerankMethod: selectedReranker?.method || 'algorithm',
-      rerankName: selectedReranker?.name || ruleForm.value.rerankerModel,
+      rerankerModel: ruleForm.value.rerankerModel, // 用于展示的reranker模型名称
+      rerank_id: rerankId, // 后端需要的rerank ID
+      rerankMethod: rerankMethod, // 用于展示的reranker方法字段
+      rerankName: rerankName, // 用于展示的reranker名称字段
       enableCompression: false, // 固定为false，不再提供UI配置
       enableDocumentCategory: false, // 固定为false，不再提供UI配置
       enableContextAssociation: true, // 固定为true，不再提供UI配置
@@ -673,6 +726,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       uploadSizeLimit: ruleForm.value.uploadSizeLimit,
       docTypes: ruleForm.value.docTypes.filter((item) => item.docTypeName.length > 0),
     };
+    console.log('[KnowledgeForm] Final payload:', payload);
     if (valid) {
       loading.visible.value = true;
       createLoading.value = true;
@@ -706,7 +760,9 @@ const submitForm = async (formEl: FormInstance | undefined) => {
             docTypeName:item.docTypeName
           })
         } )
-        KbAppAPI.createKbLibrary({teamId:route.query.id?.toString() ?? ''},{
+        // 兼容两种URL参数格式：team_id（新）和 id（旧）
+        const teamId = (route.query.team_id || route.query.id)?.toString() ?? '';
+        KbAppAPI.createKbLibrary({teamId: teamId},{
           ...payload,
           docTypes: docArr
         })
@@ -1021,5 +1077,35 @@ const handleAddDocType = () => {
 
 :deep(.o-validate-input.is-error + .error-icon) {
   display: block; // 只在验证错误时显示
+}
+
+// 模型选择器图标样式
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .model-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .model-icon-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 2px;
+    }
+  }
+  
+  span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

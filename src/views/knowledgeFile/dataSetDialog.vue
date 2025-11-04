@@ -49,9 +49,10 @@
       
       <el-form-item :label="$t('testing.type')" prop="llmId" class="datasetLlmType">
         <img
-          v-if="currentLlmOption"
-          :src="`data:image/svg+xml;base64,${currentLlmOption.llmIcon}`"
+          v-if="currentLlmOption && currentLlmOption.llmIcon"
+          :src="currentLlmOption.llmIcon"
           style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; z-index: 2;"
+          @error="handleImageError"
         />
         <el-select v-model="ruleForm.llmId" 
           popper-class="custom-llm-select-popper"
@@ -63,7 +64,12 @@
               :label="item.llmName"
               :value="item.llmId" 
           >
-              <img :src="`data:image/svg+xml;base64,${item.llmIcon}`" style="width: 20px; height: 20px; margin-right: 8px;" />
+              <img 
+                v-if="item.llmIcon"
+                :src="item.llmIcon" 
+                style="width: 20px; height: 20px; margin-right: 8px;" 
+                @error="handleImageError"
+              />
               <span>{{ item.llmName }}</span>
           </el-option>
       </el-select>
@@ -85,14 +91,17 @@
     </el-form>
   </el-dialog>
 </template>
-<script setup>
+<script setup lang="ts">
 import '@/styles/dataSetDialog.scss';
 import dataSetAPI from '@/api/dataSet'
-import { ref } from 'vue';
+import { ref, reactive, watch, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useGroupStore } from '@/store/modules/group';
 import CustomLoading from '@/components/CustomLoading/index.vue';
 import { IconCaretDown, } from '@computing/opendesign-icons';
 import { useAssets } from '@/composables/useAssets';
+import { getUserPreferences, findPreferredOption } from '@/utils/userPreferences';
 
 const store = useGroupStore();
 const { handleKnowledgeTab } = store;
@@ -113,7 +122,7 @@ const ruleForm = ref({
 });
 const ruleFormRef = ref();
 const isSubmitDisabled = ref(true);
-const llmList = ref([]);
+const llmList = ref<any[]>([]); // 存储完整的LLM列表数据
 const rules = ref({
   datasetName: [
     {
@@ -193,9 +202,15 @@ const handleResetDataSet = () => {
 
 const submitForm = () => {
   loading.value = true;
+  
+  // 根据选中的llmId找到对应的原始数据以获取必要的信息
+  const selectedLlm = llmList.value.find(item => item.llmId === ruleForm.value.llmId);
+  const llmName = selectedLlm?.llmName || '';
+  
   let param={
     kbId:route.query.kb_id,
-    ...ruleForm.value
+    ...ruleForm.value,
+    llmName: llmName // 添加LLM名称
   }
   dataSetAPI.createDataSet(param).then(res => {
     handleCancelVisible();
@@ -210,19 +225,48 @@ const handleCancelVisible = () => {
   props.handleGenerateDataSet(false);
   handleResetDataSet();
 };
+
+const handleImageError = (e) => {
+  console.error('图标加载失败:', e.target.src);
+  // 隐藏破损的图片
+  e.target.style.display = 'none';
+};
+
 const initFormData = ()=>{
   ruleForm.value.datasetName = t('defaultText.datasetName');
   ruleForm.value.description = t('defaultText.datasetDesc');
   ruleForm.value.dataCnt = 64;
   ruleForm.value.isDataCleared = false;
   ruleForm.value.isChunkRelated = false;
-  ruleForm.value.llmId = llmList.value[0]?.llmId || '';
+  
+  // 根据用户推理模型偏好设置默认模型
+  const userPreferences = getUserPreferences();
+  const preferredModel = findPreferredOption(
+    llmList.value.map(item => ({ llmId: item.llmId, modelName: item.llmName })),
+    userPreferences.reasoningModelPreference
+  );
+  
+  // 如果找到匹配的偏好模型，使用它；否则使用第一个
+  ruleForm.value.llmId = preferredModel?.llmId || llmList.value[0]?.llmId || '';
+  
+  console.log('数据集表单初始化 - 推理模型偏好:', userPreferences.reasoningModelPreference);
+  console.log('数据集表单初始化 - 选中的模型:', ruleForm.value.llmId);
+  
   ruleForm.value.documentIds = props.selectionFileData.map((item) => item.docId);
 }
 
 onMounted(() => {
   dataSetAPI.queryLlmData().then(res => {
     llmList.value = res.llms || [];
+    console.log('LLM数据加载完成:', llmList.value);
+    // 检查每个LLM的图标数据
+    llmList.value.forEach((llm, index) => {
+      if (!llm.llmIcon) {
+        console.warn(`LLM[${index}] ${llm.llmName} 缺少图标数据`);
+      }
+    });
+  }).catch(err => {
+    console.error('加载LLM数据失败:', err);
   })
 })
 watch(() => props.generateDialogVisible, (newVal) => {

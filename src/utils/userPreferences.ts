@@ -14,6 +14,7 @@ export interface UserPreferences {
   reasoningModelPreference?: ModelPreference;
   embeddingModelPreference?: ModelPreference;
   rerankerPreference?: ModelPreference;
+  searchMethodPreference?: string; // 检索方法偏好设置
   chainOfThoughtPreference?: boolean;
   autoExecutePreference?: boolean;
 }
@@ -119,6 +120,14 @@ export function getChainOfThoughtPreference(): boolean {
 export function getAutoExecutePreference(): boolean {
   const preferences = getUserPreferences();
   return preferences.autoExecutePreference ?? false; // 默认关闭
+}
+
+/**
+ * 获取检索方法偏好设置
+ */
+export function getSearchMethodPreference(): string | undefined {
+  const preferences = getUserPreferences();
+  return preferences.searchMethodPreference;
 }
 
 /**
