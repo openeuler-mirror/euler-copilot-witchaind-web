@@ -549,7 +549,7 @@ const uploadFiles = () => {
   });
 };
 
-// 并发控制的批量上传函数
+// 并发控制的批量上传函数（优化重试机制）
 const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRetries = 2) => {
   const results: any[] = [];
   let index = 0;
@@ -563,9 +563,23 @@ const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRe
       let retries = 0;
       let success = false;
       let lastError = null;
+      let currentAbortController: AbortController | null = null;
       
       while (retries <= maxRetries && !success) {
         try {
+          // 如果是重试，先取消之前的请求（如果还在进行中）
+          if (retries > 0 && currentAbortController) {
+            currentAbortController.abort();
+            
+            // ⚠️ 重要：重试前等待足够长的时间，让服务器有机会完成处理
+            // 避免"假超时"导致服务器端重复保存
+            const waitTime = Math.min(retries * 3000, 10000); // 3秒递增，最多10秒
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          }
+          
+          // 创建新的 AbortController
+          currentAbortController = new AbortController();
+          
           await new Promise((resolve, reject) => {
             doUpload({
               file: item.file,
@@ -584,22 +598,29 @@ const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRe
                 resolve(true);
               },
               fileInfo: item,
+              abortController: currentAbortController, // 传递 AbortController
             });
           });
           
           success = true;
           results.push({ success: true, item, index: currentIndex });
+          console.log(`[成功] 文件上传成功: ${item.name}`);
           
-        } catch (error) {
+        } catch (error: any) {
           lastError = error;
+          
+          // 如果是主动取消的请求，不算重试
+          if (error?.name === 'CanceledError' || error?.message?.includes('cancel')) {
+            continue; // 跳过重试计数
+          }
+          
           retries++;
+          console.error(`[失败] 文件上传失败: ${item.name} (尝试 ${retries}/${maxRetries + 1})`, error);
           
           if (retries <= maxRetries) {
-            // 重试前等待递增的时间
-            await new Promise(resolve => setTimeout(resolve, retries * 1000));
             item.percent = 0; // 重置进度
           } else {
-            console.error(`文件上传失败: ${item.name}`, lastError);
+            console.error(`[放弃] 文件上传最终失败: ${item.name}，已达到最大重试次数`);
             item.uploadStatus = 'error';
             results.push({ success: false, item, error: lastError, index: currentIndex });
           }

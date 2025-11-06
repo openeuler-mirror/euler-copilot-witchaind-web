@@ -19,24 +19,25 @@ const getAuthHeader = (): string | null => {
   return null;
 };
 
-// 动态计算超时时间的函数
+// 动态计算超时时间的函数（返回毫秒）
 const calculateTimeout = (fileSize: number, fileCount: number = 1): number => {
-  // 基础超时时间：2分钟
+  // 基础超时时间：2分钟（秒）
   const baseTimeout = 2 * 60;
   
-  // 根据文件大小计算额外时间（假设最慢网速 100KB/s）
+  // 根据文件大小计算额外时间（假设最慢网速 100KB/s）（秒）
   const sizeBasedTimeout = (fileSize / (100 * 1024));
   
-  // 批量上传的额外时间
+  // 批量上传的额外时间（秒）
   const batchTimeout = fileCount > 1 ? fileCount * 30: 0;
   
-  // 最小5分钟，最大30分钟
-  const calculatedTimeout = Math.min(
+  // 最小5分钟，最大30分钟（秒）
+  const calculatedTimeoutSeconds = Math.min(
     Math.max(baseTimeout + sizeBasedTimeout + batchTimeout, 5 * 60),
     30 * 60
   );
   
-  return calculatedTimeout;
+  // ✓ 转换为毫秒返回（axios的timeout单位是毫秒）
+  return calculatedTimeoutSeconds * 1000;
 };
 
 // 创建专用于文件上传的 axios 实例

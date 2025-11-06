@@ -47,6 +47,9 @@ class KfAppAPI {
     const fileCount = Array.isArray(payload.data.docs) ? payload.data.docs.length : 1;
     const dynamicUploadRequest = createUploadRequest(fileSize, fileCount);
     
+    // 支持请求取消
+    const abortController = options.abortController || new AbortController();
+    
     return dynamicUploadRequest({
       url: `/doc`,
       method: 'post',
@@ -55,6 +58,7 @@ class KfAppAPI {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      signal: abortController.signal, // ✓ 支持取消请求
       onUploadProgress(e) {
         const rate = Math.floor((e.loaded / (e.total as number)) * 100);
         if (rate < 100) {
