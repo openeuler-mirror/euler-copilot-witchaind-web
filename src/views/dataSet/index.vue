@@ -1026,24 +1026,30 @@ const handleInitExportTaskList = () => {
   }).then((res: any) => {
     exportTaskTotal.value = res?.total || 0;
     taskExportLoading.value = false;
-    taskExportList.value =
-      res?.tasks.map((item: any) => {
-        return {
-          id: item.opId,
-          taskId: item.taskId,
-          name: item.opName,
-          percent:
-            item?.taskStatus === 'success'
-              ? 100
-              : item.taskCompleted,
-          exportStatus: item?.taskStatus,
-        };
-      }) || [];
-    if (res?.tasks.every((item: any) => !['pending', 'running'].includes(item?.taskStatus))) {
+    // 确保正确处理空数组或undefined的情况
+    if (!res?.tasks || res.tasks.length === 0) {
+      taskExportList.value = [];
+      clearInterval(taskExportTimer.value);
+      taskExportTimer.value = null;
+      return [];
+    }
+    taskExportList.value = res.tasks.map((item: any) => {
+      return {
+        id: item.opId,
+        taskId: item.taskId,
+        name: item.opName,
+        percent:
+          item?.taskStatus === 'success'
+            ? 100
+            : item.taskCompleted,
+        exportStatus: item?.taskStatus,
+      };
+    });
+    if (res.tasks.every((item: any) => !['pending', 'running'].includes(item?.taskStatus))) {
       clearInterval(taskExportTimer.value);
       taskExportTimer.value = null;
     }
-    return res?.tasks || [];
+    return res.tasks;
   });
 };
 
@@ -1177,12 +1183,20 @@ const exportTaskPageSize = ref(10);
 
 const handleCloseAllTask=(type: ITaskType)=>{
   taskExportLoading.value = true;
+  // 先清除对应的定时器，避免竞态条件
+  if (type === 'dataset_export') {
+    clearInterval(taskExportTimer.value);
+    taskExportTimer.value = null;
+  } else {
+    clearInterval(taskTimer.value);
+    taskTimer.value = null;
+  }
   const teamId = localStorage.getItem('teamId') ?? '';
   KbAppAPI.stopAllTaskList({
     teamId,
     taskType:type
   }).then(() => {
-     if(type === 'kb_export'){
+     if(type === 'dataset_export'){
       handleInitExportTaskList();
     }else{
       handelTaskList();
@@ -1274,11 +1288,22 @@ const handelTaskList = () => {
     page: 1,
     pageSize: importTaskPageSize.value,
   }).then((res: any) => {
-    importTaskList.value = res?.tasks || [];
+    // 确保正确处理空数组或undefined的情况
+    if (!res?.tasks || res.tasks.length === 0) {
+      importTaskList.value = [];
+      importTaskTotal.value = 0;
+      taskListImportDate.value = Date.now();
+      taskListLoading.value = false;
+      clearInterval(taskTimer.value);
+      taskTimer.value = null;
+      handleSearchData();
+      return;
+    }
+    importTaskList.value = res.tasks;
     importTaskTotal.value = res.total;
     taskListImportDate.value = Date.now();
     taskListLoading.value = false;
-    if (res?.tasks?.every((item: any) => !['pending', 'running'].includes(item.taskStatus))) {
+    if (res.tasks.every((item: any) => !['pending', 'running'].includes(item.taskStatus))) {
       clearInterval(taskTimer.value);
       taskTimer.value = null;
       handleSearchData()

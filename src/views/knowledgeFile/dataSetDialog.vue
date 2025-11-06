@@ -72,7 +72,7 @@
               />
               <span>{{ item.llmName }}</span>
           </el-option>
-      </el-select>
+        </el-select>
       </el-form-item>
       <el-form-item :label="$t('dataset.isDataCleared')" prop="isDataCleared" class="isDataClean">
         <el-switch v-model="ruleForm.isDataCleared" style="--el-switch-on-color: #13ce66" />

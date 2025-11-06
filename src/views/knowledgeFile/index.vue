@@ -508,7 +508,6 @@
         <el-select
           v-model="ruleForm.parseMethod"
           :placeholder="$t('assetLibrary.message.pleaseChoose')"
-          :teleported="false"
           :suffix-icon="IconCaretDown">
           <el-option
             v-for="item in parserMethodOptions"

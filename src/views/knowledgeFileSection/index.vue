@@ -463,7 +463,7 @@ const handleEnableData = (enabledType: any) => {
       showClose: true,
       message: t('opsMessage.opsSuccess'),
       icon: IconSuccess,
-      customClass: 'o-message--error',
+      customClass: 'o-message--success',
       duration: 3000,
     });
     let payload: any = {
