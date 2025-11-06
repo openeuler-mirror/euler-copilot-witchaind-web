@@ -1044,6 +1044,10 @@ const handleQueryKbData = () => {
   const kbId = route.query.kb_id;
   curTeamInfo
   const teamId = localStorage.getItem('teamId') ?? '';
+  // 如果没有有效的 teamId，直接返回
+  if (!teamId || teamId === 'null' || teamId === 'undefined') {
+    return;
+  }
   KbAppAPI.getKbLibrary({
     teamId,
     kbId: kbId,

@@ -461,7 +461,7 @@ import { Search, CaretRight, CaretBottom, Warning, Loading } from '@element-plus
 
 const groupStore = useGroupStore();
 const { curTeamInfo,groupMenu } = storeToRefs(groupStore);
-const { handleSwitchMenu, delNav } = groupStore;
+const { handleSwitchMenu } = groupStore;
 
 const appStore = useAppStore();
 const { language } = storeToRefs(appStore);
@@ -1711,10 +1711,9 @@ const handleDeleteTeam=() => {
     const teamId = localStorage.getItem('teamId') ?? '';
     GroupAPI.deleteTeam({
             teamId
-        }).then((res) => {
-            delNav(1);
-            router.push('/group');
-            handleSwitchMenu('knowledge')
+        }).then(async (res) => {
+            localStorage.removeItem('teamId');
+            await router.push('/group');
             ElMessage.success(`${t('groupDetail.team')}【${form.value.teamName}】${t('groupDetail.dissolveSuccess')}`);
         })
     })

@@ -812,6 +812,13 @@ const handleMultipleSelect = () => {
 const handleQueryKbLibrary = (params: QueryKbRequest) => {
   loading.value = true;
   let teamId = route.query.id as string ?? localStorage.getItem('teamId');
+  // 如果没有有效的 teamId，清空列表并返回
+  if (!teamId || teamId === 'null' || teamId === 'undefined') {
+    fileTableList.data = [];
+    totalCount.value = 0;
+    loading.value = false;
+    return;
+  }
   KbAppAPI.getKbLibrary({ teamId: teamId , ...params })
     .then((res: any) => {
       fileTableList.data = res?.kbList;
