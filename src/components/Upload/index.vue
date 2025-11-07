@@ -146,7 +146,7 @@
       <el-button
         class="resetBtn"
         type="primary"
-        :disabled="btnDisabled"
+        :disabled="btnDisabled || isUploading"
         @click="handleFileType(uploadType)">
         {{ $t('btnText.confirm') }}
       </el-button>
@@ -195,6 +195,7 @@ const doUpload = (options: any) => {
 const progressVal = ref(0);
 const uploadEl = ref(null);
 const btnDisabled = ref(true);
+const isUploading = ref(false); // 添加上传锁，防止重复提交
 const props = defineProps({
   tipText: {
     type: String,
@@ -456,6 +457,12 @@ const handleLimitSize = (selectedFileData: Array<TableRow>) => {
 };
 // 提交资产库 .zip
 const uploadFiles = () => {
+  // 防止重复提交
+  if (isUploading.value) {
+    console.warn('上传正在进行中，请勿重复提交');
+    return;
+  }
+  
   if (props.singleFileLimit) {
     if (handleLimitSize(fileTableList.data)) {
       ElMessage({
@@ -468,6 +475,9 @@ const uploadFiles = () => {
       return;
     }
   }
+  
+  // 设置上传锁
+  isUploading.value = true;
   
   // 立即关闭dialog
   props.handleCancelVisible();
@@ -615,6 +625,12 @@ const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRe
 
 // 资产库内提交文件 .pdf .ms .docx......
 const uploadKnowledgeFile = async () => {
+  // 防止重复提交
+  if (isUploading.value) {
+    console.warn('上传正在进行中，请勿重复提交');
+    return;
+  }
+  
   if (props.singleFileLimit) {
     if (handleLimitSize(fileTableList.data)) {
       ElMessage({
@@ -627,6 +643,9 @@ const uploadKnowledgeFile = async () => {
       return;
     }
   }
+  
+  // 设置上传锁
+  isUploading.value = true;
   
   // 立即关闭dialog
   props.handleCancelVisible();
@@ -690,11 +709,22 @@ const uploadKnowledgeFile = async () => {
     fileTableList.data = [];
     uploadRef.value?.clearFiles();
     allFileSizes.value = 0;
+    // 释放上传锁
+    isUploading.value = false;
   }
 };
 
 // 提交数据集
 const uploadDatasetFile = () => {
+  // 防止重复提交
+  if (isUploading.value) {
+    console.warn('上传正在进行中，请勿重复提交');
+    return;
+  }
+  
+  // 设置上传锁
+  isUploading.value = true;
+  
   // 立即关闭dialog
   props.handleCancelVisible();
   
@@ -762,6 +792,12 @@ const uploadDatasetFile = () => {
     uploadRef.value?.clearFiles();
     allFileSizes.value = 0;
     uploadingList.value.length && handleToggleUploadNotify();
+    // 释放上传锁
+    isUploading.value = false;
+  }).catch((error) => {
+    console.error('uploadDatasetFile 失败:', error);
+    // 失败时也要释放上传锁
+    isUploading.value = false;
   });
 };
 const handleToggleUploadNotify = () => {

@@ -9,13 +9,16 @@ export interface CreateKbRequest {
   defaultChunkSize: number;
   uploadCountLimit: number;
   // 向量化设置
-  embeddingModel: string;
+  embeddingModel: string; // 用于展示的embedding模型名称
+  embedding_id: string; // 后端需要的embedding模型ID
+  embeddingName?: string; // embedding模型名称
   tokenizer: string;
   // 检索设置
   enableReranker: boolean;
-  rerankerModel: string;
-  rerankMethod?: string; // 后端需要的reranker方法字段
-  rerankName?: string; // 后端需要的reranker名称字段
+  rerankerModel: string; // 用于展示的reranker模型名称
+  rerank_id?: string; // 后端需要的rerank模型ID
+  rerankMethod?: string; // 用于展示的reranker方法字段
+  rerankName?: string; // 用于展示的reranker名称字段
   enableCompression: boolean;
   enableDocumentCategory: boolean;
   enableContextAssociation: boolean;
@@ -35,13 +38,16 @@ export interface UpdateKbRequest {
   defaultChunkSize: number;
   uploadCountLimit: number;
   // 向量化设置
-  embeddingModel: string;
+  embeddingModel: string; // 用于展示的embedding模型名称
+  embedding_id: string; // 后端需要的embedding模型ID
+  embeddingName?: string; // embedding模型名称
   tokenizer: string;
   // 检索设置
   enableReranker: boolean;
-  rerankerModel: string;
-  rerankMethod?: string; // 后端需要的reranker方法字段
-  rerankName?: string; // 后端需要的reranker名称字段
+  rerankerModel: string; // 用于展示的reranker模型名称
+  rerank_id?: string; // 后端需要的rerank模型ID
+  rerankMethod?: string; // 用于展示的reranker方法字段
+  rerankName?: string; // 用于展示的reranker名称字段
   enableCompression: boolean;
   enableDocumentCategory: boolean;
   enableContextAssociation: boolean;
