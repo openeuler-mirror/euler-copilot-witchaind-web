@@ -710,7 +710,8 @@ const parserMethodOptions = ref<any>([]);
 const userLanguage = ref();
 const isSubmitDisabled = ref(true);
 // 记录正在上传的文件（用于防止重复上传）
-const uploadingFiles = new Map<string, boolean>();
+// 现在保存的是 { uploading: boolean, abortController: AbortController } 对象
+const uploadingFiles = new Map<string, { uploading: boolean; abortController: AbortController }>();
 const isGenerateDataSet = computed(()=>{
   const arr = selectionFileData.value.filter((item:any) => {
     return item.docTask?.taskStatus === 'success';
@@ -1424,9 +1425,18 @@ const handleUploadMyFile = (options: any) => {
     return;
   }
   
-  // 标记为正在上传
-  uploadingFiles.set(fileKey, true);
+  // 创建 AbortController 用于取消请求
+  const abortController = new AbortController();
+  
+  // 标记为正在上传，并保存 abortController
+  uploadingFiles.set(fileKey, { uploading: true, abortController });
   console.log(`开始上传文件: ${fileName}, fileKey: ${fileKey}`);
+  
+  // 将 abortController 传递给 options
+  const uploadOptions = {
+    ...options,
+    abortController
+  };
   
   KfAppAPI.importKbLibraryFile(
     {
@@ -1437,15 +1447,20 @@ const handleUploadMyFile = (options: any) => {
         kbId: route.query.kb_id,
       },
     },
-    options
+    uploadOptions
   )
     .then(() => {
       console.log(`文件上传成功: ${fileName}, fileKey: ${fileKey}`);
       options.onSuccess({ ...options.fileInfo, success: 'success' });
     })
     .catch((err) => {
-      console.error(`文件上传失败: ${fileName}, fileKey: ${fileKey}`, err);
-      options.onError({ ...options.fileInfo, error: err });
+      // 如果是主动取消的请求，不记录为错误
+      if (err?.name === 'CanceledError' || err?.message?.includes('cancel')) {
+        console.log(`文件上传已取消: ${fileName}, fileKey: ${fileKey}`);
+      } else {
+        console.error(`文件上传失败: ${fileName}, fileKey: ${fileKey}`, err);
+        options.onError({ ...options.fileInfo, error: err });
+      }
     })
     .finally(() => {
       // 上传完成后移除标记
