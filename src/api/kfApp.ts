@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import uploadRequest, { createUploadRequest } from '@/utils/uploadRequest';
+import uploadRequest from '@/utils/uploadRequest';
 import { ChunkRequest, DocListRequest, DocRenameRequest } from './apiType';
 
 class KfAppAPI {
@@ -42,15 +42,10 @@ class KfAppAPI {
 
   /**导入资产库文档 */
   static importKbLibraryFile(payload: { data: any; params: any }, options: any) {
-    // 获取文件大小和数量用于动态超时计算
-    const fileSize = payload.data.docs?.size || 0;
-    const fileCount = Array.isArray(payload.data.docs) ? payload.data.docs.length : 1;
-    const dynamicUploadRequest = createUploadRequest(fileSize, fileCount);
-    
     // 支持请求取消
     const abortController = options.abortController || new AbortController();
     
-    return dynamicUploadRequest({
+    return uploadRequest({
       url: `/doc`,
       method: 'post',
       params: payload.params,

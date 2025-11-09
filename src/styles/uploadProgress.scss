@@ -137,6 +137,28 @@
           fill: rgb(228 33 33);
         }
       }
+      
+      .retry-button {
+        margin-left: auto;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: rgb(99,149,253);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        
+        &:hover {
+          color: rgb(79,129,233);
+        }
+        
+        .el-icon {
+          font-size: 14px;
+          path {
+            fill: currentColor;
+          }
+        }
+      }
     }
 
     .upload-restart {

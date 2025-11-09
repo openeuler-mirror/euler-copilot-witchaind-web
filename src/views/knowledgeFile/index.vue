@@ -1501,9 +1501,14 @@ const handleClearSelected = ()=>{
 }
 const handleStopUploadFile = (taskId: string) => {
   if(taskId==='all'){
+    // 清空所有前端上传任务的缓存记录
     uploadTaskListData.value = {
       uploadingList: [],
     };
-  }else{}
+  }else{
+    // 单个任务删除由uploadProgress.vue的handleCloseSingleUploadLocal处理
+    // 这里只处理后端任务（有taskId的任务）
+    // 前端任务（newUploadTask=true且uploadStatus='success'）不需要调用后端API
+  }
 };
 </script>

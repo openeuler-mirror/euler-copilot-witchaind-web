@@ -3,7 +3,7 @@
     class="upload-to-list"
     :class="{ 'has-files': hasFiles }">
     <div v-if="hasFiles">
-      <!-- 超时管理提醒 -->
+      <!-- 上传信息提示：网速检测和时间预测 -->
       <UploadTimeoutManager
         :file-size="allFileSizes"
         :file-count="fileTableList.data.length"
@@ -363,27 +363,42 @@ const handlsSuccess = () => {
 };
 
 const handleUploadRestart = (item: any) => {
+  // 手动重试上传失败的文件
   uploadingList.value = uploadingList.value.map((up) => {
     if (up.id === item.id) {
-      return { ...item, error: false, uploadStatus: 'error' };
+      return { ...item, uploadStatus: 'uploading', percent: 0 };
     }
     return up;
   });
+  
   doUpload({
     file: item.file,
     onProgress: (evt: any) => {
-      item.percent = evt;
-    },
-    onError: (e: any) => {
       uploadingList.value = uploadingList.value.map((up) => {
-        if (up.id === e.id) {
-          return e;
+        if (up.id === item.id) {
+          return { ...up, percent: evt < 100 ? evt : up.percent };
         }
         return up;
       });
     },
+    onError: (e: any) => {
+      uploadingList.value = uploadingList.value.map((up) => {
+        if (up.id === e.id) {
+          return { ...e, uploadStatus: 'error', percent: 0 };
+        }
+        return up;
+      });
+      handleToggleUploadNotify();
+    },
     onSuccess: () => {
-      props.handInitTaskList();
+      uploadingList.value = uploadingList.value.map((up) => {
+        if (up.id === item.id) {
+          return { ...up, uploadStatus: 'success', percent: 100 };
+        }
+        return up;
+      });
+      props.handleQueryTaskList();
+      handleToggleUploadNotify();
     },
     fileInfo: item,
   });
@@ -549,8 +564,8 @@ const uploadFiles = () => {
   });
 };
 
-// 并发控制的批量上传函数（优化重试机制）
-const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRetries = 2) => {
+// 并发控制的批量上传函数（无自动重试）
+const uploadWithConcurrencyControl = async (items: any[], concurrency = 3) => {
   const results: any[] = [];
   let index = 0;
   
@@ -560,71 +575,36 @@ const uploadWithConcurrencyControl = async (items: any[], concurrency = 3, maxRe
       const currentIndex = index++;
       const item = items[currentIndex];
       
-      let retries = 0;
-      let success = false;
-      let lastError = null;
-      let currentAbortController: AbortController | null = null;
-      
-      while (retries <= maxRetries && !success) {
-        try {
-          // 如果是重试，先取消之前的请求（如果还在进行中）
-          if (retries > 0 && currentAbortController) {
-            currentAbortController.abort();
-            
-            // ⚠️ 重要：重试前等待足够长的时间，让服务器有机会完成处理
-            // 避免"假超时"导致服务器端重复保存
-            const waitTime = Math.min(retries * 3000, 10000); // 3秒递增，最多10秒
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-          }
-          
-          // 创建新的 AbortController
-          currentAbortController = new AbortController();
-          
-          await new Promise((resolve, reject) => {
-            doUpload({
-              file: item.file,
-              onProgress: (evt: any) => {
-                if (evt < 100) {
-                  item.percent = evt;
-                }
-              },
-              onError: (e: any) => {
-                item.uploadStatus = 'error';
-                reject(e);
-              },
-              onSuccess: () => {
-                item.uploadStatus = 'success';
-                item.percent = 100;
-                resolve(true);
-              },
-              fileInfo: item,
-              abortController: currentAbortController, // 传递 AbortController
-            });
+      try {
+        await new Promise((resolve, reject) => {
+          doUpload({
+            file: item.file,
+            onProgress: (evt: any) => {
+              if (evt < 100) {
+                item.percent = evt;
+              }
+            },
+            onError: (e: any) => {
+              item.uploadStatus = 'error';
+              reject(e);
+            },
+            onSuccess: () => {
+              item.uploadStatus = 'success';
+              item.percent = 100;
+              resolve(true);
+            },
+            fileInfo: item,
           });
-          
-          success = true;
-          results.push({ success: true, item, index: currentIndex });
-          console.log(`[成功] 文件上传成功: ${item.name}`);
-          
-        } catch (error: any) {
-          lastError = error;
-          
-          // 如果是主动取消的请求，不算重试
-          if (error?.name === 'CanceledError' || error?.message?.includes('cancel')) {
-            continue; // 跳过重试计数
-          }
-          
-          retries++;
-          console.error(`[失败] 文件上传失败: ${item.name} (尝试 ${retries}/${maxRetries + 1})`, error);
-          
-          if (retries <= maxRetries) {
-            item.percent = 0; // 重置进度
-          } else {
-            console.error(`[放弃] 文件上传最终失败: ${item.name}，已达到最大重试次数`);
-            item.uploadStatus = 'error';
-            results.push({ success: false, item, error: lastError, index: currentIndex });
-          }
-        }
+        });
+        
+        results.push({ success: true, item, index: currentIndex });
+        console.log(`[成功] 文件上传成功: ${item.name}`);
+        
+      } catch (error: any) {
+        console.error(`[失败] 文件上传失败: ${item.name}`, error);
+        item.uploadStatus = 'error';
+        item.percent = 0;
+        results.push({ success: false, item, error, index: currentIndex });
       }
     }
   };
@@ -685,8 +665,8 @@ const uploadKnowledgeFile = async () => {
   handleToggleUploadNotify();
 
   try {
-    // 使用并发控制上传，最多3个并发，最多重试2次
-    const results = await uploadWithConcurrencyControl(uploadingList.value, 3, 2);
+    // 使用并发控制上传，最多3个并发，无自动重试
+    const results = await uploadWithConcurrencyControl(uploadingList.value, 3);
     
     const successCount = results.filter(r => r.success).length;
     const errorCount = results.length - successCount;

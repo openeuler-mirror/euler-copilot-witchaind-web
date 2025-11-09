@@ -811,7 +811,7 @@ const handleMultipleSelect = () => {
 
 const handleQueryKbLibrary = (params: QueryKbRequest) => {
   loading.value = true;
-  let teamId = route.query.id as string ?? localStorage.getItem('teamId');
+  let teamId = (route.query.team_id)?.toString() ?? localStorage.getItem('teamId');
   // 如果没有有效的 teamId，清空列表并返回
   if (!teamId || teamId === 'null' || teamId === 'undefined') {
     fileTableList.data = [];
@@ -871,8 +871,9 @@ const toggleUploadNotify = (uploadTaskPayload: {}) => {
 };
 
 const handInitTaskList = (selectedFiles: string | any[]) => {
+  const teamId = (route.query.team_id)?.toString() ?? localStorage.getItem('teamId') ?? '';
   return KbAppAPI.queryTaskList({
-    teamId:route.query.id as string,
+    teamId: teamId,
     taskType: 'kb_import',
     page: 1,
     pageSize: importTaskPageSize.value,
@@ -884,8 +885,9 @@ const handInitTaskList = (selectedFiles: string | any[]) => {
 };
 
 const handelTaskList = () => {
+  const teamId = (route.query.team_id)?.toString() ?? localStorage.getItem('teamId') ?? '';
   KbAppAPI.queryTaskList({
-    teamId:route.query.id as string,
+    teamId: teamId,
     taskType: 'kb_import',
     page: 1,
     pageSize: importTaskPageSize.value,
@@ -1051,8 +1053,9 @@ const handleCloseSingleExport = (taskId: string) => {
 
 const handleCloseAllTask=(type: ITaskType)=>{
   taskExportLoading.value = true;
+  const teamId = (route.query.team_id)?.toString() ?? localStorage.getItem('teamId') ?? '';
   KbAppAPI.stopAllTaskList({
-    teamId: route.query.id as string,
+    teamId: teamId,
     taskType:type
   }).then(() => {
     if(type === 'kb_export'){
@@ -1066,8 +1069,9 @@ const handleCloseAllTask=(type: ITaskType)=>{
 }
 
 const handleInitExportTaskList = () => {
+  const teamId = (route.query.team_id)?.toString() ?? localStorage.getItem('teamId') ?? '';
   return KbAppAPI.queryTaskList({
-    teamId: route.query.id as string,
+    teamId: teamId,
     taskType: 'kb_export',
     page: 1,
     pageSize: exportTaskPageSize.value,
@@ -1392,10 +1396,12 @@ const handleChangePage = (pageNum: number, pageSize: number) => {
 };
 
 const handleUploadMyFile = (options: any) => {
+  const teamId = (route.query.team_id)?.toString() ?? localStorage.getItem('teamId') ?? '';
   KbAppAPI.importKbLibrary(
     {
       params:{
-        teamId: route.query.id as string      },
+        teamId: teamId
+      },
       data: {
         kb_packages: options.file?.raw,
       },

@@ -44,8 +44,8 @@
                 {{ `，${$t('assetLibrary.uploadIng')}...` }}
               </div>
             </div>
-            <div class="item-close" v-if="item.taskId" >
-              <IconX @click="handleCloseSingleUpload(item.taskId)" />
+            <div class="item-close">
+              <IconX @click="handleCloseSingleUploadLocal(item)" />
             </div>
           </div>
           <el-progress
@@ -69,6 +69,14 @@
               <el-icon class="icon-tip"><WarningFilled /></el-icon>
             </span>
             <span>{{ $t('uploadText.uploadFailed') }}</span>
+            <el-button 
+              v-if="item.newUploadTask"
+              text 
+              class="retry-button"
+              @click="handleRetryUpload(item)">
+              <el-icon><IconRefresh /></el-icon>
+              <span>{{ $t('btnText.retry') }}</span>
+            </el-button>
           </div>
           <div
             v-if="item.uploadStatus === 'canceled'"
@@ -83,7 +91,7 @@
       <div
         class="item-all-close"
         v-if="taskStatusList.length > 0 && isShowAllClear"
-        @click="handleCloseSingleUpload('all')">
+        @click="handleClearAll()">
         {{ $t('btnText.clearAll') }}
       </div>
     </div>
@@ -92,7 +100,7 @@
 <script setup lang="ts">
 import '@/styles/uploadProgress.scss';
 import TextSingleTootip from '@/components/TextSingleTootip/index.vue';
-import { IconChevronUp, IconChevronDown, IconX } from '@computing/opendesign-icons';
+import { IconChevronUp, IconChevronDown, IconX, IconRefresh } from '@computing/opendesign-icons';
 const taskStatusList = ref<any>([]);
 const props = defineProps({
   isKnowledgeFileUpload: {
@@ -143,6 +151,62 @@ const props = defineProps({
 const handleScroll = (e: any) => {
   props.handleImportScroll(e);
 };
+
+// 处理关闭单个上传任务
+const handleCloseSingleUploadLocal = (item: any) => {
+  // 判断是否是前端新上传任务且已成功
+  const isFrontendSuccessTask = item.newUploadTask && item.uploadStatus === 'success';
+  
+  if (isFrontendSuccessTask) {
+    // 前端上传成功的任务，只删除前端缓存记录，不调用后端API
+    taskStatusList.value = taskStatusList.value.filter((task: any) => 
+      (task.taskId || task.id) !== (item.taskId || item.id)
+    );
+  } else if (item.newUploadTask && !item.taskId) {
+    // 前端新上传任务但失败的，也只删除前端缓存
+    taskStatusList.value = taskStatusList.value.filter((task: any) => 
+      (task.taskId || task.id) !== (item.taskId || item.id)
+    );
+  } else if (item.taskId) {
+    // 有taskId的后端任务，调用后端API删除
+    props.handleCloseSingleUpload(item.taskId);
+  } else {
+    // 其他情况，从前端列表中移除
+    taskStatusList.value = taskStatusList.value.filter((task: any) => 
+      (task.taskId || task.id) !== (item.taskId || item.id)
+    );
+  }
+};
+
+// 处理清空所有任务
+const handleClearAll = () => {
+  // 分离前端上传任务和后端任务
+  const frontendTasks = taskStatusList.value.filter((item: any) => item.newUploadTask);
+  const backendTasks = taskStatusList.value.filter((item: any) => !item.newUploadTask && item.taskId);
+  
+  // 清除前端上传任务（无论成功还是失败）
+  if (frontendTasks.length > 0) {
+    taskStatusList.value = taskStatusList.value.filter((item: any) => !item.newUploadTask);
+  }
+  
+  // 如果有后端任务，调用后端API清空
+  if (backendTasks.length > 0) {
+    props.handleCloseSingleUpload('all');
+  }
+  
+  // 如果只有前端任务且全部清空了，直接清空列表
+  if (frontendTasks.length > 0 && backendTasks.length === 0) {
+    taskStatusList.value = [];
+  }
+};
+
+// 处理重试上传
+const handleRetryUpload = (item: any) => {
+  if (props.handleUploadRestart) {
+    props.handleUploadRestart(item);
+  }
+};
+
 watch(
   () => props.uploadingList,
   () => {
