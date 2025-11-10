@@ -248,17 +248,13 @@ const initFormData = ()=>{
   
   // 如果找到匹配的偏好模型，使用它；否则使用第一个
   ruleForm.value.llmId = preferredModel?.llmId || llmList.value[0]?.llmId || '';
-  
-  console.log('数据集表单初始化 - 推理模型偏好:', userPreferences.reasoningModelPreference);
-  console.log('数据集表单初始化 - 选中的模型:', ruleForm.value.llmId);
-  
+
   ruleForm.value.documentIds = props.selectionFileData.map((item) => item.docId);
 }
 
 onMounted(() => {
   dataSetAPI.queryLlmData().then(res => {
     llmList.value = res.llms || [];
-    console.log('LLM数据加载完成:', llmList.value);
     // 检查每个LLM的图标数据
     llmList.value.forEach((llm, index) => {
       if (!llm.llmIcon) {

@@ -1,28 +1,24 @@
 <template>
-  <div v-if="showTimeoutInfo" class="upload-timeout-info">
+  <div v-if="showUploadInfo" class="upload-info">
     <el-alert
-      :title="timeoutInfoTitle"
-      :description="timeoutInfoDesc"
-      :type="isTimeoutExceeded || speedTestFailed ? 'warning' : 'info'"
+      :title="uploadInfoTitle"
+      :description="uploadInfoDesc"
+      :type="speedTestFailed ? 'warning' : 'info'"
       :closable="false"
       show-icon>
       <template #default>
-        <div class="timeout-details">
-          <div class="timeout-item">
+        <div class="upload-details">
+          <div class="upload-item">
             <span class="label">{{ $t('uploadTimeout.estimatedUploadTime') }}</span>
             <span class="value">{{ estimatedTime }}</span>
           </div>
-          <div class="timeout-item">
-            <span class="label">{{ $t('uploadTimeout.timeoutLimit') }}</span>
-            <span class="value">{{ timeoutLimit }}</span>
-          </div>
-          <div class="timeout-item">
-            <span class="label">{{ $t('uploadTimeout.networkSuggestion') }}</span>
-            <span class="value">{{ networkSuggestion }}</span>
-          </div>
-          <div v-if="networkSpeed > 0" class="timeout-item">
+          <div v-if="networkSpeed > 0" class="upload-item">
             <span class="label">{{ $t('uploadTimeout.currentNetworkSpeed') }}</span>
             <span class="value">{{ formatNetworkSpeed(networkSpeed) }}</span>
+          </div>
+          <div class="upload-item">
+            <span class="label">{{ $t('uploadTimeout.networkSuggestion') }}</span>
+            <span class="value">{{ networkSuggestion }}</span>
           </div>
         </div>
       </template>
@@ -33,9 +29,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { calculateTimeout } from '@/utils/uploadRequest';
 import KfAppAPI from '@/api/kfApp';
-import _ from 'lodash';
 
 // 速度测试响应类型
 interface SpeedTestResponse {
@@ -142,29 +136,12 @@ onUnmounted(() => {
   networkSpeed.value = 0;
 });
 
-const showTimeoutInfo = computed(() => {
+const showUploadInfo = computed(() => {
   return props.showInfo && (props.fileSize > 50 * 1024 * 1024 || props.fileCount > 10);
 });
 
-// 检查是否超过超时限制
-const isTimeoutExceeded = computed(() => {
-  const speedInBytesPerSecond = networkSpeed.value > 0 
-    ? networkSpeed.value * 1024 // 转换为 bytes/s
-    : 1024 * 1024; // 默认 1MB/s
-  
-  const totalSize = props.fileSize;
-  
-  // 简单计算：总大小 / 网速
-  const estimatedSeconds = Math.ceil(totalSize / speedInBytesPerSecond);
-  const timeoutSeconds = calculateTimeout(props.fileSize, props.fileCount);
-  
-  return estimatedSeconds > timeoutSeconds;
-});
-
-const timeoutInfoTitle = computed(() => {
-  if (isTimeoutExceeded.value) {
-    return t('uploadTimeout.timeoutWarning');
-  } else if (props.fileSize > 100 * 1024 * 1024) {
+const uploadInfoTitle = computed(() => {
+  if (props.fileSize > 100 * 1024 * 1024) {
     return t('uploadTimeout.largeFileUploadReminder');
   } else if (props.fileCount > 20) {
     return t('uploadTimeout.batchUploadReminder');
@@ -172,10 +149,8 @@ const timeoutInfoTitle = computed(() => {
   return t('uploadTimeout.uploadReminder');
 });
 
-const timeoutInfoDesc = computed(() => {
-  if (isTimeoutExceeded.value) {
-    return t('uploadTimeout.timeoutExceededDescription');
-  } else if (speedTestFailed.value) {
+const uploadInfoDesc = computed(() => {
+  if (speedTestFailed.value) {
     return t('uploadTimeout.speedTestFailed');
   }
   return t('uploadTimeout.timeoutDescription');
@@ -205,12 +180,6 @@ const estimatedTime = computed(() => {
   }
 });
 
-const timeoutLimit = computed(() => {
-  const timeout = calculateTimeout(props.fileSize, props.fileCount);
-  const minutes = Math.ceil(timeout / 60);
-  return t('uploadTimeout.minutes', { minutes });
-});
-
 const networkSuggestion = computed(() => {
   if (props.fileSize > 200 * 1024 * 1024) {
     return t('uploadTimeout.useWiredNetwork');
@@ -222,13 +191,13 @@ const networkSuggestion = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.upload-timeout-info {
+.upload-info {
   margin-bottom: 16px;
   
-  .timeout-details {
+  .upload-details {
     margin-top: 8px;
     
-    .timeout-item {
+    .upload-item {
       display: flex;
       align-items: center;
       margin-bottom: 4px;
@@ -236,7 +205,7 @@ const networkSuggestion = computed(() => {
       
       .label {
         color: var(--o-text-color-secondary);
-        min-width: 80px;
+        min-width: 120px;
       }
       
       .value {
@@ -256,3 +225,4 @@ const networkSuggestion = computed(() => {
   font-size: 12px;
 }
 </style>
+
