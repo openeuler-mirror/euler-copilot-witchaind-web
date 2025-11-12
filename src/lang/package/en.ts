@@ -535,9 +535,9 @@ export default {
     chunkMethod: 'Chunk Method',
     default: 'Default',
     customDelimiter: 'Custom Delimiter',
-    chunkIdentifier: 'Chunk Identifier',
+    seperatingCharacters: 'Chunk Identifier',
     pleaseSelectChunkMethod: 'Please select chunk method',
-    pleaseEnterChunkIdentifier: 'Please enter chunk identifier',
+    pleaseEnterSeperatingCharacters: 'Please enter chunk identifier',
   },
   tabs: {
     basicSettings: 'Basic Settings',

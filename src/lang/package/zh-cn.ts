@@ -542,9 +542,9 @@ export default {
     chunkMethod: '分块方法',
     default: '默认',
     customDelimiter: '自定义分隔符',
-    chunkIdentifier: '分块标识符',
+    seperatingCharacters: '分块标识符',
     pleaseSelectChunkMethod: '请选择分块方法',
-    pleaseEnterChunkIdentifier: '请输入分块标识符',
+    pleaseEnterSeperatingCharacters: '请输入分块标识符',
   },
   tabs: {
     basicSettings: '基本设置',

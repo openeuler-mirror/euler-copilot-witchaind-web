@@ -88,12 +88,12 @@
           </el-form-item>
           
           <el-form-item 
-            :label="$t('chunkMethod.chunkIdentifier')" 
-            prop="chunkIdentifier"
+            :label="$t('chunkMethod.seperatingCharacters')" 
+            prop="seperatingCharacters"
             v-if="ruleForm.chunkMethod === 'mark'">
             <el-input
-              v-model="ruleForm.chunkIdentifier"
-              :placeholder="$t('chunkMethod.pleaseEnterChunkIdentifier')"
+              v-model="ruleForm.seperatingCharacters"
+              :placeholder="$t('chunkMethod.pleaseEnterSeperatingCharacters')"
               maxlength="50" />
           </el-form-item>
           
@@ -295,7 +295,7 @@ interface RuleForm {
   // 解析设置
   defaultParseMethod: string;
   chunkMethod: string; // semantic | mark
-  chunkIdentifier: string; // 分块标识符
+  seperatingCharacters: string; // 分块标识符
   defaultChunkSize: number;
   uploadCountLimit: number;
   // 向量化设置
@@ -330,7 +330,7 @@ const ruleForm = ref<RuleForm>({
   // 解析设置
   defaultParseMethod: '',
   chunkMethod: 'semantic', // 默认语义分块
-  chunkIdentifier: '\\n\\n', // 默认分块标识符
+  seperatingCharacters: '\\n\\n', // 默认分块标识符
   defaultChunkSize: 512,
   uploadCountLimit: 128,
   // 向量化设置
@@ -441,7 +441,7 @@ onMounted(async () => {
           uploadSizeLimit: props.formData?.uploadSizeLimit || 512,
           uploadCountLimit: props.formData?.uploadCountLimit || 128,
           chunkMethod: props.formData?.chunkMethod || 'semantic',
-          chunkIdentifier: props.formData?.chunkIdentifier || '\\n\\n',
+          seperatingCharacters: props.formData?.seperatingCharacters || props.formData?.chunkIdentifier || '\\n\\n',
           // 保留父组件传递的tokenizer值
           tokenizer: props.formData?.tokenizer || '',
           // 处理reranker字段映射：优先使用rerankerModel，如果没有则从rerankName获取
@@ -540,7 +540,7 @@ const checkSectionCompletion = () => {
   Object.entries(sectionFields).forEach(([sectionKey, fields]) => {
     const isComplete = fields.every(field => {
       const value = ruleForm.value[field];
-      if (field === 'chunkIdentifier' && ruleForm.value.chunkMethod !== 'mark') {
+      if (field === 'seperatingCharacters' && ruleForm.value.chunkMethod !== 'mark') {
         return true; // 条件字段，不影响完成状态
       }
       return value !== undefined && value !== null && value !== '';
@@ -705,7 +705,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       // 解析设置
       defaultParseMethod: ruleForm.value.defaultParseMethod,
       chunkMethod: ruleForm.value.chunkMethod,
-      chunkIdentifier: ruleForm.value.chunkIdentifier,
+      seperatingCharacters: ruleForm.value.seperatingCharacters,
       defaultChunkSize: ruleForm.value.defaultChunkSize,
       uploadCountLimit: ruleForm.value.uploadCountLimit,
       // 向量化设置
