@@ -5,7 +5,7 @@ export interface CreateKbRequest {
   // 解析设置
   defaultParseMethod: string;
   chunkMethod: string; // semantic | mark
-  chunkIdentifier: string; // 分块标识符
+  seperatingCharacters: string; // 分块标识符
   defaultChunkSize: number;
   uploadCountLimit: number;
   // 向量化设置
@@ -34,7 +34,7 @@ export interface UpdateKbRequest {
   // 解析设置
   defaultParseMethod: string;
   chunkMethod: string; // semantic | mark
-  chunkIdentifier: string; // 分块标识符
+  seperatingCharacters: string; // 分块标识符
   defaultChunkSize: number;
   uploadCountLimit: number;
   // 向量化设置
