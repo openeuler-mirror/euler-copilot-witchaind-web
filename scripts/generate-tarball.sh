@@ -3,10 +3,6 @@
 # generate-tarball.sh - 生成 RPM 构建所需的源码 tarball
 #
 # 兼容性: Linux, macOS 及类 UNIX 系统
-# 用法:
-#   ./scripts/generate-tarball.sh              # 在当前目录生成 tarball
-#   ./scripts/generate-tarball.sh -o /tmp      # 指定输出目录
-#   ./scripts/generate-tarball.sh -v 0.10.1    # 指定版本号（默认从 package.json 读取）
 # =============================================================================
 
 set -euo pipefail
@@ -28,17 +24,13 @@ usage() {
     cat <<EOF
 用法: $0 [选项]
 
+默认输出到项目根目录下的 cache/ 目录。
+
 选项:
-  -o, --output DIR     输出 tarball 的目录（默认: 项目根目录）
+  -o, --output DIR     输出 tarball 的目录（默认: cache/）
   -v, --version VER    指定版本号（默认: 从 package.json 读取）
   -r, --ref REF        git 引用，默认 HEAD（可指定 tag 或 commit）
   -h, --help           显示此帮助信息
-
-示例:
-  $0                           # 使用默认设置
-  $0 -o /tmp                   # 输出 tarball 到 /tmp
-  $0 -v 1.0.0 -o ~/rpmbuild/SOURCES  # 指定版本和输出目录
-  $0 -r v0.10.1                # 从指定 tag 打包
 EOF
     exit 0
 }
@@ -57,13 +49,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 log_info "项目根目录: $PROJECT_ROOT"
 
-# 检查是否在 git 仓库中
 if ! git -C "$PROJECT_ROOT" rev-parse --git-dir > /dev/null 2>&1; then
     log_error "当前目录不是 git 仓库，无法使用 git archive"
     exit 1
 fi
 
-# 读取版本号
 if [ -z "$VERSION" ]; then
     VERSION=$(grep '"version"' "$PROJECT_ROOT/package.json" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
     if [ -z "$VERSION" ]; then
@@ -77,12 +67,11 @@ PACKAGE_NAME="euler-copilot-witchaind-web"
 TARBALL_NAME="${PACKAGE_NAME}-${VERSION}.tar.gz"
 
 if [ -z "$OUTPUT_DIR" ]; then
-    OUTPUT_DIR="$PROJECT_ROOT"
+    OUTPUT_DIR="$PROJECT_ROOT/cache"
 fi
 mkdir -p "$OUTPUT_DIR"
 TARBALL_PATH="$OUTPUT_DIR/$TARBALL_NAME"
 
-# 确保工作区干净（未 tracked 的修改不会被包含，这是一致的）
 if ! git -C "$PROJECT_ROOT" diff-index --quiet HEAD -- 2>/dev/null; then
     log_warn "工作区有未提交的修改，这些修改不会包含在 tarball 中"
 fi
