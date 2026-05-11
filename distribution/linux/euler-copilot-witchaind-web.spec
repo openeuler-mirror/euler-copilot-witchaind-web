@@ -97,8 +97,6 @@ echo "pnpm store 目录: $PNPM_STORE_DIR"
 
 # -------------------------------------------------------
 # 5. 安装 pnpm 并构建应用
-#    package.json 已配置 pnpm.onlyBuiltDependencies，
-#    允许 esbuild、vue-demi 等必需的构建脚本运行。
 # -------------------------------------------------------
 echo "安装 pnpm 包管理器..."
 npm install pnpm -g --registry=https://mirrors.huaweicloud.com/repository/npm/
@@ -151,13 +149,7 @@ cp -a %{_builddir}/%{name}-%{version}/build/linux/nginx.conf %{buildroot}/etc/ng
 # 文件列表：定义 RPM 包包含的文件
 # -----------------------------------------------------
 %files
-%attr(0644, root, root) /usr/share/witchaind-web/*
-%attr(0644, root, root) /usr/share/witchaind-web/css/*
-%attr(0644, root, root) /usr/share/witchaind-web/fonts/*
-%attr(0644, root, root) /usr/share/witchaind-web/img/*
-%attr(0644, root, root) /usr/share/witchaind-web/js/*
-%attr(0644, root, root) /usr/share/witchaind-web/webp/*
-
+%attr(0644, root, root) /usr/share/witchaind-web/
 %config(noreplace,missingok) /etc/nginx/conf.d/witchaind-web.conf
 
 # -----------------------------------------------------
