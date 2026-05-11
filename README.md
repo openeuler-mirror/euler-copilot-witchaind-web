@@ -1,3 +1,7 @@
+## 打包
+
+RPM 打包说明见 [distribution/linux/README.md](distribution/linux/README.md)。
+
 ## 项目启动
 
 ```bash
