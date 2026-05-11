@@ -104,6 +104,7 @@ echo "安装 pnpm 包管理器..."
 npm install pnpm -g --registry=https://mirrors.huaweicloud.com/repository/npm/
 
 echo "安装项目依赖..."
+export HUSKY=0
 pnpm install --registry=https://mirrors.huaweicloud.com/repository/npm/
 
 echo "构建应用..."
@@ -185,5 +186,5 @@ fi
 * Mon Sep 15 2025 zxstty <zhaojiaqi18@huawei.com> - 0.10.0-1
 - 更新源码
 
-* Fri Jun 10 2025 zxstty <zhaojiaqi18@huawei.com> - 0.9.6-1
+* Tue Jun 10 2025 zxstty <zhaojiaqi18@huawei.com> - 0.9.6-1
 - 初始版本发布，构建阶段自动安装 Node.js
