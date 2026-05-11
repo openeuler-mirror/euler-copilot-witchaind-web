@@ -1,3 +1,5 @@
+# euler-copilot-witchaind-web
+
 ## 打包
 
 RPM 打包说明见 [distribution/linux/README.md](distribution/linux/README.md)。

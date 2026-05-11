@@ -4,6 +4,10 @@
 
 The web frontend of EulerCopilot witChainD.
 
+#### Packaging
+
+See [distribution/linux/README.md](distribution/linux/README.md) for RPM packaging instructions.
+
 #### Software Architecture
 
 Software architecture description
