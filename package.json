@@ -126,6 +126,14 @@
     "vue-tsc": "^2.0.29"
   },
   "license": "MIT",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "es5-ext",
+      "esbuild",
+      "vue-demi"
+    ]
+  },
   "engines": {
     "node": ">=22.14.0"
   }
