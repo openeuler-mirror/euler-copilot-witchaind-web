@@ -150,22 +150,11 @@ cp -a %{_builddir}/%{name}-%{version}/build/linux/nginx.conf %{buildroot}/etc/ng
 # 文件列表：定义 RPM 包包含的文件
 # -----------------------------------------------------
 %files
-%dir /usr/share/witchaind-web
 %attr(0644, root, root) /usr/share/witchaind-web/*
-
-%dir /usr/share/witchaind-web/css
 %attr(0644, root, root) /usr/share/witchaind-web/css/*
-
-%dir /usr/share/witchaind-web/fonts
 %attr(0644, root, root) /usr/share/witchaind-web/fonts/*
-
-%dir /usr/share/witchaind-web/img
 %attr(0644, root, root) /usr/share/witchaind-web/img/*
-
-%dir /usr/share/witchaind-web/js
 %attr(0644, root, root) /usr/share/witchaind-web/js/*
-
-%dir /usr/share/witchaind-web/webp
 %attr(0644, root, root) /usr/share/witchaind-web/webp/*
 
 %config(noreplace,missingok) /etc/nginx/conf.d/witchaind-web.conf
