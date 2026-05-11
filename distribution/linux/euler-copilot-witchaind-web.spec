@@ -185,5 +185,5 @@ fi
 * Mon Sep 15 2025 zxstty <zhaojiaqi18@huawei.com> - 0.10.0-1
 - 更新源码
 
-* Mon Jun 10 2025 zxstty <zhaojiaqi18@huawei.com> - 0.9.6-1
+* Fri Jun 10 2025 zxstty <zhaojiaqi18@huawei.com> - 0.9.6-1
 - 初始版本发布，构建阶段自动安装 Node.js
