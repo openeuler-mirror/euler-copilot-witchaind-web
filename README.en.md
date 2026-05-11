@@ -1,41 +1,23 @@
 # euler-copilot-witchaind-web
 
-#### Description
-
 The web frontend of EulerCopilot witChainD.
 
-#### Packaging
+## Packaging
 
 See [distribution/linux/README.md](distribution/linux/README.md) for RPM packaging instructions.
 
-#### Software Architecture
+## Getting Started
 
-Software architecture description
+```bash
+# Install pnpm
+npm install pnpm -g
 
-#### Installation
+# Configure registry mirror (optional)
+pnpm config set registry https://registry.npmmirror.com
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+# Install dependencies
+pnpm install
 
-#### Instructions
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Contribution
-
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
-
-#### Gitee Feature
-
-1.  You can use Readme_XXX.md to support different languages, such as Readme_en.md, Readme_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+# Start dev server
+pnpm run dev
+```
